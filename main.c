@@ -7,8 +7,13 @@
 #include "polynom.yacc.h"
 
 void debug_polynomial(polynomial_t* __polynomial) {
-  printf("Letter: %c\n", __polynomial->letter);
-  printf("size: %ld, capacity: %ld\n", __polynomial->coefs.size, __polynomial->coefs.capacity);
+  printf("ptr: %p\nlength: %ld\ncapacity: %ld\nletter: %c\n",
+    __polynomial->coefs.coefs, __polynomial->coefs.size,
+    __polynomial->coefs.capacity, __polynomial->letter);
+  for (int64_t i = 0; i < __polynomial->coefs.capacity; ++i) {
+    printf("%ld ", __polynomial->coefs.coefs[i]);
+  }
+  puts("");
 }
 
 int64_t pow2(int64_t __num) {
@@ -21,14 +26,6 @@ int64_t pow2(int64_t __num) {
 } 
 
 void print_polynomial(polynomial_t* __polynomial) {
-  /*
-  printf("ptr: %p\nlength: %ld\ncapacity: %ld\n", __polynomial->coefs.coefs,
-      __polynomial->coefs.size, __polynomial->coefs.capacity);
-  for (int64_t i = 0; i < __polynomial->coefs.size; ++i) {
-    printf("%ld ", __polynomial->coefs.coefs[i]);
-  }
-  puts("");
-  */
   int64_t __size = __polynomial->coefs.size;
   if (__size == 0) {
     puts("0");
@@ -157,30 +154,75 @@ polynomial_t* mul_polynomials(
   polynomial_t* __polynomial1,
   polynomial_t* __polynomial2) {
 
+  printf("\n\n");
+  printf("Polynomial1:\n");
+  debug_polynomial(__polynomial1);
+  printf("Polynomial2:\n");
+  debug_polynomial(__polynomial2);
+  printf("\n\n");
 
-  int64_t __max_len;
-  if (__polynomial1->coefs.size == 1) {
-    __max_len = __polynomial2->coefs.size;
-  } else if (__polynomial2->coefs.size == 1) {
-    __max_len = __polynomial1->coefs.size;
-  } else {
-    __max_len = __polynomial1->coefs.size + __polynomial2->coefs.size - 1;
+  int64_t __max_cap =
+    MAX(__polynomial1->coefs.capacity, __polynomial2->coefs.capacity);
+  int64_t __max_power = __max_cap - 1;
+
+  printf("MAX_CAP: %ld\n", __max_cap);
+
+  if (__polynomial1->coefs.capacity != __max_cap) {
+    polynomial_t* __tmp = allocate_polynomial(__max_power);
+    memcpy(
+      __tmp->coefs.coefs,
+      __polynomial1->coefs.coefs,
+      __polynomial1->coefs.size * sizeof(int64_t)
+    );
+    __tmp->letter = __polynomial1->letter;
+    __tmp->coefs.size = __polynomial1->coefs.size;
+    
+    polynomial_t* __swap_tmp = __polynomial1;
+    __polynomial1 = __tmp;
+    __tmp = __swap_tmp;
+
+    deallocate_polynomial(__tmp);
+  } else if (__polynomial2->coefs.capacity != __max_cap) {
+
+    polynomial_t* __tmp = allocate_polynomial(__max_cap - 1);
+    memcpy(
+      __tmp->coefs.coefs,
+      __polynomial2->coefs.coefs,
+      __polynomial2->coefs.size * sizeof(int64_t)
+    );
+    __tmp->letter = __polynomial2->letter;
+    __tmp->coefs.size = __polynomial2->coefs.size;
+    
+    polynomial_t* __swap_tmp = __polynomial2;
+    __polynomial2 = __tmp;
+    __tmp = __swap_tmp;
+
+    deallocate_polynomial(__tmp);
   }
-  polynomial_t* __res_polynomial = allocate_polynomial(__max_len - 1);
+
+  polynomial_t* __res_polynomial = allocate_polynomial(2 * __max_cap - 1);
 
   karatsuba(
     __polynomial1->coefs.coefs,
     __polynomial2->coefs.coefs,
     __res_polynomial->coefs.coefs,
-    __res_polynomial->coefs.capacity
+    __max_cap
   );
 
-  __res_polynomial->coefs.size = __max_len;
-  if (__polynomial1->letter != 0) {
-    __res_polynomial->letter = __polynomial1->letter;
-  } else {
-    __res_polynomial->letter = __polynomial2->letter;
-  }
+  int64_t __power = __res_polynomial->coefs.capacity - 1;
+  while (__res_polynomial->coefs.coefs[__power] == 0) { --__power; }
+  __res_polynomial->coefs.size = __power + 1;
+  __res_polynomial->letter = (__polynomial1->letter != 0) ?
+    __polynomial1->letter : __polynomial2->letter;
+
+  printf("\n\n");
+  printf("Polynomial1:\n");
+  debug_polynomial(__polynomial1);
+  printf("Polynomial2:\n");
+  debug_polynomial(__polynomial2);
+  printf("Result:\n");
+  debug_polynomial(__res_polynomial);
+  printf("\n\n");
 
   if (__polynomial1 != __polynomial2) {
     deallocate_polynomial(__polynomial1);
@@ -188,8 +230,8 @@ polynomial_t* mul_polynomials(
   } else {
     deallocate_polynomial(__polynomial1);
   }
-
   return __res_polynomial;
+
 }
 
 void karatsuba(
@@ -250,17 +292,24 @@ polynomial_t* copy_polynomial(polynomial_t* __polynomial) {
 
   return __res_polynomial;
 }
-extern polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power)
+
+polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power)
 {
   if (__power < 0) {
     yyerror("Power must be postive number");
     exit(-1);
   }
-  polynomial_t* __tmp = __polynomial;
-  for (; __power >= 0; --__power) {
-    __tmp = mul_polynomials(__tmp, __polynomial);
+  polynomial_t* __copy = NULL;
+  if (__power % 2 == 1) {__copy = copy_polynomial(__polynomial); }
+  for (; __power != 1; __power /= 2) {
+    __polynomial = mul_polynomials(__polynomial, __polynomial);
   }
-  return __tmp;
+  if (__copy != NULL) {
+    __polynomial = mul_polynomials(__polynomial, __copy);
+    deallocate_polynomial(__copy);
+  }
+
+  return __polynomial;
 }
 
 void deallocate_polynomial(polynomial_t* __polynomial) {

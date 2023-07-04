@@ -1,6 +1,7 @@
 %{
   #include <stdio.h>
   #include <stdint.h>
+  #include <stdlib.h>
   #include <math.h>
 %}
 
@@ -15,6 +16,7 @@
 }
 
 %token<letter> LETTER
+%token<letter> EXIT
 %token<num> NUMBER
 %token<num> EOL
 
@@ -36,6 +38,7 @@ input: %empty
 line:
     EOL                                   { puts("Input string in empty"); }
     | polynomial EOL                      { print_polynomial($1); }
+    | EXIT EOL                            { YYACCEPT; }
 
 polynomial: 
     '(' polynomial ')' '(' polynomial ')' {

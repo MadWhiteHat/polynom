@@ -13,6 +13,7 @@
 [0-9]+        { yylval.num = atoi(yytext); return NUMBER; }
 [a-z]         { yylval.letter = *yytext; return LETTER;}
 [\n]          { return EOL; }
+"exit"        { return EXIT; }
 .             { return *yytext; }
 
 %%
