@@ -48,6 +48,7 @@ extern void karatsuba(
 
 extern polynomial_t* copy_polynomial(polynomial_t* __polynomial);
 extern polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power);
+extern void shrink_to_fit_polynomial(polynomial_t* __polynomial);
 
 extern void is_valid_operation(
   polynomial_t* __polynomial1,

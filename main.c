@@ -215,6 +215,8 @@ polynomial_t* mul_polynomials(
   __res_polynomial->letter = (__polynomial1->letter != 0) ?
     __polynomial1->letter : __polynomial2->letter;
 
+  shrink_to_fit_polynomial(__res_polynomial);
+
   printf("\n\n");
   printf("Polynomial1:\n");
   debug_polynomial(__polynomial1);
@@ -230,8 +232,8 @@ polynomial_t* mul_polynomials(
   } else {
     deallocate_polynomial(__polynomial1);
   }
-  return __res_polynomial;
 
+  return __res_polynomial;
 }
 
 void karatsuba(
@@ -293,8 +295,7 @@ polynomial_t* copy_polynomial(polynomial_t* __polynomial) {
   return __res_polynomial;
 }
 
-polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power)
-{
+polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power) {
   if (__power < 0) {
     yyerror("Power must be postive number");
     exit(-1);
@@ -306,10 +307,27 @@ polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power)
   }
   if (__copy != NULL) {
     __polynomial = mul_polynomials(__polynomial, __copy);
-    deallocate_polynomial(__copy);
   }
 
   return __polynomial;
+}
+
+void shrink_to_fit_polynomial(polynomial_t* __polynomial) {
+  int64_t __new_cap = pow2(__polynomial->coefs.size);
+  if (__new_cap == __polynomial->coefs.capacity) { return; }
+
+  int64_t* __new_coefs = calloc(__new_cap, sizeof(int64_t));
+  if (__new_coefs == NULL) { return; }
+  memcpy(__new_coefs, __polynomial->coefs.coefs,
+    __polynomial->coefs.size * sizeof(int64_t));
+
+  int64_t* __tmp = __polynomial->coefs.coefs;
+  __polynomial->coefs.coefs = __new_coefs;
+  __new_coefs = __tmp;
+
+  __polynomial->coefs.capacity = __new_cap;
+
+  free(__new_coefs);
 }
 
 void deallocate_polynomial(polynomial_t* __polynomial) {
