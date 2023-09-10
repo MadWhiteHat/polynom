@@ -14,6 +14,7 @@
 [a-z]         { yylval.letter = *yytext; return LETTER;}
 [\n]          { return EOL; }
 "exit"        { return EXIT; }
-.             { return *yytext; }
+")("          { unput('('); unput('*'); unput(')'); }
+.             { printf("%s\n", yytext); return *yytext; }
 
 %%

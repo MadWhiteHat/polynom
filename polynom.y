@@ -48,10 +48,6 @@ polynomial:
 
     | '-' polynomial %prec UNARY_MINUS    { $$ = neg_polynomial($2); }
 
-    | polynomial polynomial %prec '*'     {
-                                            is_valid_operation($1, $2);
-                                            $$ = mul_polynomials($1, $2);
-                                          }
     | polynomial '*' polynomial           {
                                             is_valid_operation($1, $3);
                                             $$ = mul_polynomials($1, $3);
@@ -66,6 +62,7 @@ polynomial:
                                           }
     | LETTER                              { $$ = init_polynomial(1, $1, 1); }
     | NUMBER                              { $$ = init_polynomial($1, 0, 0); }
+    | NUMBER LETTER                       { $$ = init_polynomial($1, $2, 1); }
 
 power: 
      NUMBER                               { $$ = $1; }
@@ -77,3 +74,4 @@ power:
      | power '%' power                    { $$ = $1 % $3; }
      | power '+' power                    { $$ = $1 + $3; }
      | power '-' power                    { $$ = $1 - $3; }
+%%
