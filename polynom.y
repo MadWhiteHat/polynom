@@ -13,16 +13,19 @@
   int64_t num;
   char letter;
   polynomial_t* polynomial;
+  char* variable;
 }
 
 %token<letter> LETTER
 %token<letter> EXIT
+%token<variable> VARIABLE
 %token<num> NUMBER
 %token<num> EOL
 
 %type<num> line
-%type<polynomial> polynomial
 %type<num> power
+%type<polynomial> polynomial
+%type<variable> variable
 
 %left '+' '-'
 %left '*' '/' '%'
@@ -38,6 +41,7 @@ input: %empty
 
 line:
     EOL                                   { puts("Input string in empty"); }
+    | variable EOL                        { printf("%s\n"), $1; }
     | polynomial EOL                      { print_polynomial($1); }
     | EXIT EOL                            { YYACCEPT; }
 
@@ -75,4 +79,7 @@ power:
      | power '%' power                    { $$ = $1 % $3; }
      | power '+' power                    { $$ = $1 + $3; }
      | power '-' power                    { $$ = $1 - $3; }
+
+variable:
+     VARIABLE '=' polynomial                ;
 %%

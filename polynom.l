@@ -2,6 +2,8 @@
   #include <stdio.h>
   #include <stdlib.h>
   #include <string.h>
+
+  #include "polynom.h"
   #include "polynom.yacc.h"
 %}
 
@@ -12,6 +14,12 @@
 [ \t\r]             ; // whitespace
 [0-9]+              { yylval.num = atoi(yytext); return NUMBER; }
 [a-z]               { yylval.letter = *yytext; return LETTER; }
+\$[_a-zA-Z0-9]+     {
+                      yylval.variable = allocate_variable(
+                        yytext + 1, yyleng - 1
+                      );
+                      return VARIABLE;
+                    }
 \n                  { return EOL; }
 "exit"              { return EXIT; }
 ")("                {

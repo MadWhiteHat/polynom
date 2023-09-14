@@ -57,6 +57,13 @@ extern void is_valid_operation(
 
 extern void deallocate_polynomial(polynomial_t* __polynomial);
 
+extern char* allocate_variable(
+  const char* __var_name,
+  const int64_t __var_name_len
+);
+
+extern void deallocate_variable(char* __var_name);
+
 extern void yyerror(const char* __msg);
 extern int yylex();
 

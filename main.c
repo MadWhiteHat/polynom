@@ -367,6 +367,23 @@ void is_valid_operation(
   }
 }
 
+char* allocate_variable(const char* __var_name, const int64_t __var_name_len) {
+  char* __new_var_name = NULL;
+
+  __new_var_name = (char*)calloc(__var_name_len + 1, sizeof(char));
+  printf("Src: %s\t Count: %ld\n", __var_name, __var_name_len);
+  memcpy(__new_var_name, __var_name, __var_name_len);
+  printf("Dest: \n");
+  for (int i = 0; i < __var_name_len + 1; ++i) {
+    printf("%x ", __new_var_name[i]);
+  }
+  puts("");
+  
+  return __new_var_name;
+}
+
+void deallocate_variable(char* __var_name) { free(__var_name); }
+
 void yyerror(const char* __msg) {
   printf("ERROR: %s\n", __msg);
 }
