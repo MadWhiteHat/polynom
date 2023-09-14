@@ -9,12 +9,27 @@
 
 %%
 
-[ \t\r]       ; // whitespace
-[0-9]+        { yylval.num = atoi(yytext); return NUMBER; }
-[a-z]         { yylval.letter = *yytext; return LETTER;}
-[\n]          { return EOL; }
-"exit"        { return EXIT; }
-")("          { unput('('); unput('*'); unput(')'); }
-.             { printf("%s\n", yytext); return *yytext; }
+[ \t\r]             ; // whitespace
+[0-9]+              { yylval.num = atoi(yytext); return NUMBER; }
+[a-z]               { yylval.letter = *yytext; return LETTER; }
+\n                  { return EOL; }
+"exit"              { return EXIT; }
+")("                {
+                      unput('(');
+                      unput('*');
+                      unput(')');
+                    }
+[^\*\/\+\-\r\n]\(   {
+                      char tmp = yytext[0];
+                      unput('(');
+                      unput('*');
+                      unput(tmp);
+                    }
+\)[^\*\/\+\-\^\r\n] {
+                      unput(yytext[1]);
+                      unput('*');
+                      unput(')');
+                    }
+.                   { return *yytext; }
 
 %%

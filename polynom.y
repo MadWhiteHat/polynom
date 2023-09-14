@@ -63,6 +63,7 @@ polynomial:
     | LETTER                              { $$ = init_polynomial(1, $1, 1); }
     | NUMBER                              { $$ = init_polynomial($1, 0, 0); }
     | NUMBER LETTER                       { $$ = init_polynomial($1, $2, 1); }
+    | NUMBER LETTER '^' power             { $$ = init_polynomial($1, $2, $4); }
 
 power: 
      NUMBER                               { $$ = $1; }
