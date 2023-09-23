@@ -18,9 +18,9 @@ typedef struct polynomial {
   char letter;
 } polynomial_t;
 
-extern void print_polynomial(polynomial_t* __polynomial);
+extern void _print_polynomial(polynomial_t* __polynomial);
 extern polynomial_t* allocate_polinomial(int64_t __power);
-extern polynomial_t* init_polynomial(
+extern polynomial_t* create_polynomial(
   int64_t __coef,
   char __letter,
   int64_t __power
@@ -56,13 +56,6 @@ extern void is_valid_operation(
 );
 
 extern void deallocate_polynomial(polynomial_t* __polynomial);
-
-extern char* allocate_variable(
-  const char* __var_name,
-  const int64_t __var_name_len
-);
-
-extern void deallocate_variable(char* __var_name);
 
 extern void yyerror(const char* __msg);
 extern int yylex();

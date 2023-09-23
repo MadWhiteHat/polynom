@@ -7,17 +7,19 @@
 
 %code requires {
   #include "polynom.h"
+  #include "variable_list.h"
 }
 
 %union {
   int64_t num;
   char letter;
+  variable_t* variable;
   polynomial_t* polynomial;
-  char* variable;
 }
 
 %token<letter> LETTER
 %token<letter> EXIT
+%token<letter> PRINT
 %token<variable> VARIABLE
 %token<num> NUMBER
 %token<num> EOL
@@ -40,46 +42,55 @@ input: %empty
      ;
 
 line:
-    EOL                                   { puts("Input string in empty"); }
-    | variable EOL                        { printf("%s\n"), $1; }
-    | polynomial EOL                      { print_polynomial($1); }
-    | EXIT EOL                            { YYACCEPT; }
+    EOL                                 { puts("Input string in empty"); }
+    | PRINT variable EOL                { print_variable($2); }
+    | variable EOL                      { }
+    | EXIT EOL                          {
+                                          remove_all_variables_list(&var_list);
+                                          YYACCEPT;
+                                        }
 
 polynomial: 
-    '(' polynomial ')'                    { $$ = $2; } 
+    '(' polynomial ')'                  { $$ = $2; } 
 
-    | polynomial '^' power                { $$ = pow_polynomial($1, $3); }
+    | polynomial '^' power              { $$ = pow_polynomial($1, $3); }
 
-    | '-' polynomial %prec UNARY_MINUS    { $$ = neg_polynomial($2); }
+    | '-' polynomial %prec UNARY_MINUS  { $$ = neg_polynomial($2); }
 
-    | polynomial '*' polynomial           {
-                                            is_valid_operation($1, $3);
-                                            $$ = mul_polynomials($1, $3);
-                                          }
-    | polynomial '+' polynomial           {
-                                            is_valid_operation($1, $3);
-                                            $$ = sum_polynomials($1, $3, '+');
-                                          }
-    | polynomial '-' polynomial           {
-                                            is_valid_operation($1, $3);
-                                            $$ = sum_polynomials($1, $3, '-');
-                                          }
-    | LETTER                              { $$ = init_polynomial(1, $1, 1); }
-    | NUMBER                              { $$ = init_polynomial($1, 0, 0); }
-    | NUMBER LETTER                       { $$ = init_polynomial($1, $2, 1); }
-    | NUMBER LETTER '^' power             { $$ = init_polynomial($1, $2, $4); }
+    | polynomial '*' polynomial         {
+                                          is_valid_operation($1, $3);
+                                          $$ = mul_polynomials($1, $3);
+                                        }
+    | polynomial '+' polynomial         {
+                                          is_valid_operation($1, $3);
+                                          $$ = sum_polynomials($1, $3, '+');
+                                        }
+    | polynomial '-' polynomial         {
+                                          is_valid_operation($1, $3);
+                                          $$ = sum_polynomials($1, $3, '-');
+                                        }
+    | LETTER                            { $$ = create_polynomial(1, $1, 1); }
+    | NUMBER                            { $$ = create_polynomial($1, 0, 0); }
+    | NUMBER LETTER                     { $$ = create_polynomial($1, $2, 1); }
+    | NUMBER LETTER '^' power           { $$ = create_polynomial($1, $2, $4); }
 
 power: 
-     NUMBER                               { $$ = $1; }
-     | '(' power ')'                      { $$ = $2; }
-     | '-' power %prec UNARY_MINUS        { $$ = -$2; }
-     | power '^' power                    { $$ = (int64_t)pow($1, $3); }
-     | power '*' power                    { $$ = $1 * $3; }
-     | power '/' power                    { $$ = $1 / $3; }
-     | power '%' power                    { $$ = $1 % $3; }
-     | power '+' power                    { $$ = $1 + $3; }
-     | power '-' power                    { $$ = $1 - $3; }
+     NUMBER                             { $$ = $1; }
+     | '(' power ')'                    { $$ = $2; }
+     | '-' power %prec UNARY_MINUS      { $$ = -$2; }
+     | power '^' power                  { $$ = (int64_t)pow($1, $3); }
+     | power '*' power                  { $$ = $1 * $3; }
+     | power '/' power                  { $$ = $1 / $3; }
+     | power '%' power                  { $$ = $1 % $3; }
+     | power '+' power                  { $$ = $1 + $3; }
+     | power '-' power                  { $$ = $1 - $3; }
 
 variable:
-     VARIABLE '=' polynomial                ;
+     polynomial                         {
+                                          add_variable_list(&var_list, NULL, $1);
+                                        }
+     | VARIABLE '=' polynomial          {
+                                          add_variable_list(&var_list, $1, $3);
+                                        }
+
 %%
