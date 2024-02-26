@@ -20,6 +20,7 @@
 %token<letter> LETTER
 %token<letter> EXIT
 %token<letter> PRINT
+%token<letter> PRINT_VARS
 %token<variable> VARIABLE
 %token<num> NUMBER
 %token<num> EOL
@@ -38,13 +39,18 @@
 %%
 
 input: %empty
-     | input line
-     ;
+    | input line
+    ;
 
 line:
     EOL                                 { puts("Input string in empty"); }
-    | PRINT variable EOL                { print_variable($2); }
-    | variable EOL                      { }
+    | PRINT_VARS EOL                    { print_variables_list(var_list); }
+    | PRINT VARIABLE EOL                { print_variable($2); }
+    | PRINT polynomial EOL              {
+                                          print_polynomial($2);
+                                          deallocate_polynomial($2);
+                                        }
+    | variable EOL                      {  }
     | EXIT EOL                          {
                                           remove_all_variables_list(&var_list);
                                           YYACCEPT;
@@ -72,25 +78,27 @@ polynomial:
     | LETTER                            { $$ = create_polynomial(1, $1, 1); }
     | NUMBER                            { $$ = create_polynomial($1, 0, 0); }
     | NUMBER LETTER                     { $$ = create_polynomial($1, $2, 1); }
+    | LETTER '^' power                  { $$ = create_polynomial(1, $1, $3); }
     | NUMBER LETTER '^' power           { $$ = create_polynomial($1, $2, $4); }
 
 power: 
-     NUMBER                             { $$ = $1; }
-     | '(' power ')'                    { $$ = $2; }
-     | '-' power %prec UNARY_MINUS      { $$ = -$2; }
-     | power '^' power                  { $$ = (int64_t)pow($1, $3); }
-     | power '*' power                  { $$ = $1 * $3; }
-     | power '/' power                  { $$ = $1 / $3; }
-     | power '%' power                  { $$ = $1 % $3; }
-     | power '+' power                  { $$ = $1 + $3; }
-     | power '-' power                  { $$ = $1 - $3; }
+    NUMBER                              { $$ = $1; }
+    | '(' power ')'                     { $$ = $2; }
+    | '-' power %prec UNARY_MINUS       { $$ = -$2; }
+    | power '^' power                   { $$ = (int64_t)pow($1, $3); }
+    | power '*' power                   { $$ = $1 * $3; }
+    | power '/' power                   { $$ = $1 / $3; }
+    | power '%' power                   { $$ = $1 % $3; }
+    | power '+' power                   { $$ = $1 + $3; }
+    | power '-' power                   { $$ = $1 - $3; }
 
 variable:
-     polynomial                         {
-                                          add_variable_list(&var_list, NULL, $1);
-                                        }
-     | VARIABLE '=' polynomial          {
+    VARIABLE '=' polynomial             {
                                           add_variable_list(&var_list, $1, $3);
+                                        }
+    | polynomial                        {
+                                          add_variable_list(&var_list, NULL, $1);
+                                          print_variable($$);
                                         }
 
 %%

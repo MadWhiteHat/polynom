@@ -18,46 +18,46 @@ typedef struct polynomial {
   char letter;
 } polynomial_t;
 
-extern void _print_polynomial(polynomial_t* __polynomial);
-extern polynomial_t* allocate_polinomial(int64_t __power);
+extern void print_polynomial(polynomial_t* polynomial);
+extern polynomial_t* allocate_polinomial(int64_t power);
 extern polynomial_t* create_polynomial(
-  int64_t __coef,
-  char __letter,
-  int64_t __power
+  int64_t coef,
+  char letter,
+  int64_t power
 );
 
-extern polynomial_t* neg_polynomial(polynomial_t* __polynomial);
+extern polynomial_t* neg_polynomial(polynomial_t* polynomial);
 
 extern polynomial_t* sum_polynomials(
-  polynomial_t* __polynomial1,
-  polynomial_t* __polynomial2,
-  const char __action
+  polynomial_t* polynomial1,
+  polynomial_t* polynomial2,
+  const char action
 );
 
 extern polynomial_t* mul_polynomials(
-  polynomial_t* __polynomial1,
-  polynomial_t* __polynomial2
+  polynomial_t* polynomial1,
+  polynomial_t* polynomial2
 );
 
 extern void karatsuba(
-  int64_t* __coefs1,
-  int64_t* __coefs2,
-  int64_t* __res_coefs,
-  int64_t __size
+  int64_t* coefs1,
+  int64_t* coefs2,
+  int64_t* res_coefs,
+  int64_t size
 );
 
-extern polynomial_t* copy_polynomial(polynomial_t* __polynomial);
-extern polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power);
-extern void shrink_to_fit_polynomial(polynomial_t* __polynomial);
+extern polynomial_t* copy_polynomial(polynomial_t* polynomial);
+extern polynomial_t* pow_polynomial(polynomial_t* polynomial, int64_t power);
+extern void shrink_to_fit_polynomial(polynomial_t* polynomial);
 
 extern void is_valid_operation(
-  polynomial_t* __polynomial1,
-  polynomial_t* __polynomial2
+  polynomial_t* polynomial1,
+  polynomial_t* polynomial2
 );
 
-extern void deallocate_polynomial(polynomial_t* __polynomial);
+extern void deallocate_polynomial(polynomial_t* polynomial);
 
-extern void yyerror(const char* __msg);
+extern void yyerror(const char* msg);
 extern int yylex();
 
 #endif // _POLYNOM_H

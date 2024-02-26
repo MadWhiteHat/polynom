@@ -5,361 +5,362 @@
 
 #include "polynom.h"
 
-void debug_polynomial(polynomial_t* __polynomial) {
+void debug_polynomial(polynomial_t* polynomial) {
   printf("ptr: %p\nlength: %ld\ncapacity: %ld\nletter: %c\n",
-    __polynomial->coefs.coefs, __polynomial->coefs.size,
-    __polynomial->coefs.capacity, __polynomial->letter);
-  for (int64_t i = 0; i < __polynomial->coefs.capacity; ++i) {
-    printf("%ld ", __polynomial->coefs.coefs[i]);
+    polynomial->coefs.coefs, polynomial->coefs.size,
+    polynomial->coefs.capacity, polynomial->letter);
+  for (int64_t i = 0; i < polynomial->coefs.capacity; ++i) {
+    printf("%ld ", polynomial->coefs.coefs[i]);
   }
   puts("");
 }
 
-int64_t pow2(int64_t __num) {
-  int64_t __res = 1;
-  do {
-    __res *= 2;
-  } while (__res < __num);
+int64_t pow2(int64_t num) {
+  int64_t res = 1;
 
-  return __res;
+  do { res *= 2; } while (res < num);
+
+  return res;
 } 
 
-void _print_polynomial(polynomial_t* __polynomial) {
-  int64_t __size = __polynomial->coefs.size;
-  if (__size == 0) {
+void print_polynomial(polynomial_t* polynomial) {
+  int64_t size = polynomial->coefs.size;
+  if (size == 0) {
     puts("0");
-  } else if (__size == 1) {
-    printf("%ld", __polynomial->coefs.coefs[0]);
-  } else if (__size == 2) {
-    if (__polynomial->coefs.coefs[1] == 1) {
-      printf("%c", __polynomial->letter);
-    } else if (__polynomial->coefs.coefs[1] == -1) {
-      printf("-%c", __polynomial->letter);
+  } else if (size == 1) {
+    printf("%ld", polynomial->coefs.coefs[0]);
+  } else if (size == 2) {
+    if (polynomial->coefs.coefs[1] == 1) {
+      printf("%c", polynomial->letter);
+    } else if (polynomial->coefs.coefs[1] == -1) {
+      printf("-%c", polynomial->letter);
     } else {
-      printf("%ld%c", __polynomial->coefs.coefs[1], __polynomial->letter);
+      printf("%ld%c", polynomial->coefs.coefs[1], polynomial->letter);
     }
-    if (__polynomial->coefs.coefs[0] > 0) {
-      printf("+%ld", __polynomial->coefs.coefs[0]);
-    } else if (__polynomial->coefs.coefs[0] < 0) {
-      printf("%ld", __polynomial->coefs.coefs[0]);
+    if (polynomial->coefs.coefs[0] > 0) {
+      printf("+%ld", polynomial->coefs.coefs[0]);
+    } else if (polynomial->coefs.coefs[0] < 0) {
+      printf("%ld", polynomial->coefs.coefs[0]);
     }
   } else {
-    if (__polynomial->coefs.coefs[__size - 1] == 1) {
-      printf("%c^%ld", __polynomial->letter, __size - 1);
-    } else if (__polynomial->coefs.coefs[__size - 1] == -1) {
-      printf("-%c^%ld", __polynomial->letter, __size - 1);
+    if (polynomial->coefs.coefs[size - 1] == 1) {
+      printf("%c^%ld", polynomial->letter, size - 1);
+    } else if (polynomial->coefs.coefs[size - 1] == -1) {
+      printf("-%c^%ld", polynomial->letter, size - 1);
     } else {
-      printf("%ld%c^%ld", __polynomial->coefs.coefs[__size - 1],
-        __polynomial->letter, __size - 1);
+      printf("%ld%c^%ld", polynomial->coefs.coefs[size - 1],
+        polynomial->letter, size - 1);
     }
-    for (int64_t i = __size - 1; i > 2; --i) {
-      int64_t __coef = __polynomial->coefs.coefs[i - 1];
-      if (__coef == 0 ) { continue; }
-      else if (__coef == 1) {
-        printf("+%c^%ld", __polynomial->letter, i - 1);
-      } else if (__coef == -1) {
-        printf("-%c^%ld", __polynomial->letter, i - 1);
-      } else if (__coef > 0) {
-        printf("+%ld%c^%ld", __coef, __polynomial->letter, i - 1);
+    for (int64_t i = size - 1; i > 2; --i) {
+      int64_t coef = polynomial->coefs.coefs[i - 1];
+      if (coef == 0 ) { continue; }
+      else if (coef == 1) {
+        printf("+%c^%ld", polynomial->letter, i - 1);
+      } else if (coef == -1) {
+        printf("-%c^%ld", polynomial->letter, i - 1);
+      } else if (coef > 0) {
+        printf("+%ld%c^%ld", coef, polynomial->letter, i - 1);
       } else {
-        printf("%ld%c^%ld", __coef, __polynomial->letter, i - 1);
+        printf("%ld%c^%ld", coef, polynomial->letter, i - 1);
       }
     }
-    if (__polynomial->coefs.coefs[1] == 1) {
-      printf("+%c", __polynomial->letter);
-    } else if (__polynomial->coefs.coefs[1] == -1) {
-      printf("-%c", __polynomial->letter);
-    } else if (__polynomial->coefs.coefs[1] > 0) {
-      printf("+%ld%c", __polynomial->coefs.coefs[1], __polynomial->letter);
-    } else if (__polynomial->coefs.coefs[1] < 0) {
-      printf("%ld%c", __polynomial->coefs.coefs[1], __polynomial->letter);
+    if (polynomial->coefs.coefs[1] == 1) {
+      printf("+%c", polynomial->letter);
+    } else if (polynomial->coefs.coefs[1] == -1) {
+      printf("-%c", polynomial->letter);
+    } else if (polynomial->coefs.coefs[1] > 0) {
+      printf("+%ld%c", polynomial->coefs.coefs[1], polynomial->letter);
+    } else if (polynomial->coefs.coefs[1] < 0) {
+      printf("%ld%c", polynomial->coefs.coefs[1], polynomial->letter);
     }
-    if (__polynomial->coefs.coefs[0] > 0) {
-      printf("+%ld", __polynomial->coefs.coefs[0]);
-    } else if (__polynomial->coefs.coefs[0] < 0) {
-      printf("%ld", __polynomial->coefs.coefs[0]);
+    if (polynomial->coefs.coefs[0] > 0) {
+      printf("+%ld", polynomial->coefs.coefs[0]);
+    } else if (polynomial->coefs.coefs[0] < 0) {
+      printf("%ld", polynomial->coefs.coefs[0]);
     }
   }
   puts("");
 }
 
-polynomial_t* allocate_polynomial(int64_t __power) {
-  if (__power < 0) {
+polynomial_t* allocate_polynomial(int64_t power) {
+  if (power < 0) {
     yyerror("Power must be postive number");
     exit(-1);
   }
 
-  polynomial_t* __polynomial = (polynomial_t*)calloc(1, sizeof(polynomial_t));
-  if (__polynomial == NULL) { return NULL; }
+  polynomial_t* polynomial = (polynomial_t*)calloc(1, sizeof(polynomial_t));
+  if (polynomial == NULL) { return NULL; }
 
-  int64_t __req_cap = __power + 1;
-  int64_t __new_cap = pow2(__req_cap);
-  __polynomial->coefs.coefs = (int64_t*)calloc(__new_cap, sizeof(int64_t));
+  int64_t req_cap = power + 1;
+  int64_t new_cap = pow2(req_cap);
+  polynomial->coefs.coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
 
-  if (__polynomial->coefs.coefs == NULL) {
-    free(__polynomial);
-    __polynomial = NULL;
+  if (polynomial->coefs.coefs == NULL) {
+    free(polynomial);
+    polynomial = NULL;
   }
-  __polynomial->coefs.capacity = __new_cap;
-  return __polynomial;
+  polynomial->coefs.capacity = new_cap;
+
+  return polynomial;
 }
 
 polynomial_t* create_polynomial(
-  int64_t __coef,
-  char __letter,
-  int64_t __power
+  int64_t coef,
+  char letter,
+  int64_t power
 ) {
-  polynomial_t* __polynomial = allocate_polynomial(__power);
-  if (__polynomial == NULL) { return NULL; }
-  if (__coef != 0) {
-    __polynomial->coefs.coefs[__power] = __coef;
-    __polynomial->coefs.size = __power + 1;
-    __polynomial->letter = __letter;
+  polynomial_t* polynomial = allocate_polynomial(power);
+  if (polynomial == NULL) { return NULL; }
+  if (coef != 0) {
+    polynomial->coefs.coefs[power] = coef;
+    polynomial->coefs.size = power + 1;
+    polynomial->letter = letter;
   } else {
-    __polynomial->coefs.size = 0;
-    __polynomial->letter = 0;
+    polynomial->coefs.size = 0;
+    polynomial->letter = 0;
   }
 
-  return __polynomial;
+  return polynomial;
 }
 
-polynomial_t* neg_polynomial(polynomial_t* __polynomial) {
-  for (int64_t i = 0; i < __polynomial->coefs.size; ++i) {
-    __polynomial->coefs.coefs[i] = -__polynomial->coefs.coefs[i];
+polynomial_t* neg_polynomial(polynomial_t* polynomial) {
+  for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
+    polynomial->coefs.coefs[i] = -polynomial->coefs.coefs[i];
   }
-  return __polynomial;
+  return polynomial;
 }
 
 
 polynomial_t* sum_polynomials(
-  polynomial_t* __polynomial1,
-  polynomial_t* __polynomial2,
-  const char __action
+  polynomial_t* polynomial1,
+  polynomial_t* polynomial2,
+  const char action
 ) {
-  if (__action == '-') { neg_polynomial(__polynomial2); }
+  if (action == '-') { neg_polynomial(polynomial2); }
 
-  polynomial_t* __min_polynomial = NULL;
-  polynomial_t* __max_polynomial = NULL;
+  polynomial_t* min_polynomial = NULL;
+  polynomial_t* max_polynomial = NULL;
   
-  if (__polynomial1->coefs.size >= __polynomial2->coefs.size) {
-    __max_polynomial = __polynomial1;
-    __min_polynomial = __polynomial2;
+  if (polynomial1->coefs.size >= polynomial2->coefs.size) {
+    max_polynomial = polynomial1;
+    min_polynomial = polynomial2;
   } else {
-    __max_polynomial = __polynomial2;
-    __min_polynomial = __polynomial1;
+    max_polynomial = polynomial2;
+    min_polynomial = polynomial1;
   }
 
-  for (int64_t i = 0; i < __min_polynomial->coefs.size; ++i) {
-    __max_polynomial->coefs.coefs[i] += __min_polynomial->coefs.coefs[i];
+  for (int64_t i = 0; i < min_polynomial->coefs.size; ++i) {
+    max_polynomial->coefs.coefs[i] += min_polynomial->coefs.coefs[i];
   }
 
-  int64_t __new_size = __max_polynomial->coefs.size;
-  while (__new_size) {
-    if (__max_polynomial->coefs.coefs[__new_size - 1] != 0) { break; } 
-    --__new_size;
+  int64_t new_size = max_polynomial->coefs.size;
+  while (new_size) {
+    if (max_polynomial->coefs.coefs[new_size - 1] != 0) { break; } 
+    --new_size;
   }
-  if (__new_size == 0) {
-    free(__max_polynomial->coefs.coefs);
-    __max_polynomial->coefs.coefs = NULL;
-    __max_polynomial->coefs.capacity = 0;
+  if (new_size == 0) {
+    free(max_polynomial->coefs.coefs);
+    max_polynomial->coefs.coefs = NULL;
+    max_polynomial->coefs.capacity = 0;
   }
-  __max_polynomial->coefs.size = __new_size;
+  max_polynomial->coefs.size = new_size;
 
-  deallocate_polynomial(__min_polynomial);
-  return __max_polynomial;
+  deallocate_polynomial(min_polynomial);
+  return max_polynomial;
 }
 
 polynomial_t* mul_polynomials(
-  polynomial_t* __polynomial1,
-  polynomial_t* __polynomial2) {
+  polynomial_t* polynomial1,
+  polynomial_t* polynomial2) {
 
   //printf("\n\n");
   //printf("Polynomial1:\n");
-  //debug_polynomial(__polynomial1);
+  //debug_polynomial(polynomial1);
   //printf("Polynomial2:\n");
-  //debug_polynomial(__polynomial2);
+  //debug_polynomial(polynomial2);
   //printf("\n\n");
 
-  int64_t __max_cap =
-    MAX(__polynomial1->coefs.capacity, __polynomial2->coefs.capacity);
-  int64_t __max_power = __max_cap - 1;
+  int64_t max_cap =
+    MAX(polynomial1->coefs.capacity, polynomial2->coefs.capacity);
+  int64_t max_power = max_cap - 1;
 
-  //printf("MAX_CAP: %ld\n", __max_cap);
+  //printf("MAX_CAP: %ld\n", max_cap);
 
-  if (__polynomial1->coefs.capacity != __max_cap) {
-    polynomial_t* __tmp = allocate_polynomial(__max_power);
+  if (polynomial1->coefs.capacity != max_cap) {
+    polynomial_t* tmp = allocate_polynomial(max_power);
     memcpy(
-      __tmp->coefs.coefs,
-      __polynomial1->coefs.coefs,
-      __polynomial1->coefs.size * sizeof(int64_t)
+      tmp->coefs.coefs,
+      polynomial1->coefs.coefs,
+      polynomial1->coefs.size * sizeof(int64_t)
     );
-    __tmp->letter = __polynomial1->letter;
-    __tmp->coefs.size = __polynomial1->coefs.size;
+    tmp->letter = polynomial1->letter;
+    tmp->coefs.size = polynomial1->coefs.size;
     
-    polynomial_t* __swap_tmp = __polynomial1;
-    __polynomial1 = __tmp;
-    __tmp = __swap_tmp;
+    polynomial_t* swap_tmp = polynomial1;
+    polynomial1 = tmp;
+    tmp = swap_tmp;
 
-    deallocate_polynomial(__tmp);
-  } else if (__polynomial2->coefs.capacity != __max_cap) {
+    deallocate_polynomial(tmp);
+  } else if (polynomial2->coefs.capacity != max_cap) {
 
-    polynomial_t* __tmp = allocate_polynomial(__max_cap - 1);
+    polynomial_t* tmp = allocate_polynomial(max_cap - 1);
     memcpy(
-      __tmp->coefs.coefs,
-      __polynomial2->coefs.coefs,
-      __polynomial2->coefs.size * sizeof(int64_t)
+      tmp->coefs.coefs,
+      polynomial2->coefs.coefs,
+      polynomial2->coefs.size * sizeof(int64_t)
     );
-    __tmp->letter = __polynomial2->letter;
-    __tmp->coefs.size = __polynomial2->coefs.size;
+    tmp->letter = polynomial2->letter;
+    tmp->coefs.size = polynomial2->coefs.size;
     
-    polynomial_t* __swap_tmp = __polynomial2;
-    __polynomial2 = __tmp;
-    __tmp = __swap_tmp;
+    polynomial_t* swap_tmp = polynomial2;
+    polynomial2 = tmp;
+    tmp = swap_tmp;
 
-    deallocate_polynomial(__tmp);
+    deallocate_polynomial(tmp);
   }
 
-  polynomial_t* __res_polynomial = allocate_polynomial(2 * __max_cap - 1);
+  polynomial_t* res_polynomial = allocate_polynomial(2 * max_cap - 1);
 
   karatsuba(
-    __polynomial1->coefs.coefs,
-    __polynomial2->coefs.coefs,
-    __res_polynomial->coefs.coefs,
-    __max_cap
+    polynomial1->coefs.coefs,
+    polynomial2->coefs.coefs,
+    res_polynomial->coefs.coefs,
+    max_cap
   );
 
-  int64_t __power = __res_polynomial->coefs.capacity - 1;
-  while (__res_polynomial->coefs.coefs[__power] == 0) { --__power; }
-  __res_polynomial->coefs.size = __power + 1;
-  __res_polynomial->letter = (__polynomial1->letter != 0) ?
-    __polynomial1->letter : __polynomial2->letter;
+  int64_t power = res_polynomial->coefs.capacity - 1;
+  while (res_polynomial->coefs.coefs[power] == 0) { --power; }
+  res_polynomial->coefs.size = power + 1;
+  res_polynomial->letter = (polynomial1->letter != 0) ?
+    polynomial1->letter : polynomial2->letter;
 
-  shrink_to_fit_polynomial(__res_polynomial);
+  shrink_to_fit_polynomial(res_polynomial);
 
   //printf("\n\n");
   //printf("Polynomial1:\n");
-  //debug_polynomial(__polynomial1);
+  //debug_polynomial(polynomial1);
   //printf("Polynomial2:\n");
-  //debug_polynomial(__polynomial2);
+  //debug_polynomial(polynomial2);
   //printf("Result:\n");
-  //debug_polynomial(__res_polynomial);
+  //debug_polynomial(res_polynomial);
   //printf("\n\n");
 
-  if (__polynomial1 != __polynomial2) {
-    deallocate_polynomial(__polynomial1);
-    deallocate_polynomial(__polynomial2);
+  if (polynomial1 != polynomial2) {
+    deallocate_polynomial(polynomial1);
+    deallocate_polynomial(polynomial2);
   } else {
-    deallocate_polynomial(__polynomial1);
+    deallocate_polynomial(polynomial1);
   }
 
-  return __res_polynomial;
+  return res_polynomial;
 }
 
 void karatsuba(
-  int64_t* __coefs1,
-  int64_t* __coefs2,
-  int64_t* __res_coefs,
-  int64_t __size) {
-  if (__size <= 64) {
-    for (int64_t i = 0; i < __size; ++i) {
-      for (int64_t j = 0; j < __size; ++j) {
-        __res_coefs[i + j] += __coefs1[i] * __coefs2[j];
+  int64_t* coefs1,
+  int64_t* coefs2,
+  int64_t* res_coefs,
+  int64_t size) {
+  if (size <= 64) {
+    for (int64_t i = 0; i < size; ++i) {
+      for (int64_t j = 0; j < size; ++j) {
+        res_coefs[i + j] += coefs1[i] * coefs2[j];
       }
     }
   } else {
-    int64_t __k =  __size / 2;
-    int64_t* __l = (int64_t*)calloc(__k, sizeof(int64_t));
-    int64_t* __r = (int64_t*)calloc(__k, sizeof(int64_t));
-    int64_t* __t = (int64_t*)calloc(__size, sizeof(int64_t));
-    if (__l == NULL || __r == NULL || __t == NULL) {
+    int64_t k =  size / 2;
+    int64_t* l = (int64_t*)calloc(k, sizeof(int64_t));
+    int64_t* r = (int64_t*)calloc(k, sizeof(int64_t));
+    int64_t* t = (int64_t*)calloc(size, sizeof(int64_t));
+    if (l == NULL || r == NULL || t == NULL) {
       return;
     }
-    for (int64_t i = 0; i < __k; ++i) {
-      __l[i] = __coefs1[i] + __coefs1[i + __k];
-      __r[i] = __coefs2[i] + __coefs2[i + __k];
+    for (int64_t i = 0; i < k; ++i) {
+      l[i] = coefs1[i] + coefs1[i + k];
+      r[i] = coefs2[i] + coefs2[i + k];
     }
-    karatsuba(__l, __r, __t, __k);
-    karatsuba(__coefs1, __coefs2, __res_coefs, __k);
-    karatsuba(__coefs1 + __k, __coefs2 + __k, __res_coefs + __size, __k);
+    karatsuba(l, r, t, k);
+    karatsuba(coefs1, coefs2, res_coefs, k);
+    karatsuba(coefs1 + k, coefs2 + k, res_coefs + size, k);
 
-    int64_t* __t1 = __t;
-    int64_t* __t2 = __t + __k;
-    int64_t* __s1 = __res_coefs;
-    int64_t* __s2 = __res_coefs + __k;
-    int64_t* __s3 = __res_coefs + 2 * __k;
-    int64_t* __s4 = __res_coefs + 3 * __k;
+    int64_t* t1 = t;
+    int64_t* t2 = t + k;
+    int64_t* s1 = res_coefs;
+    int64_t* s2 = res_coefs + k;
+    int64_t* s3 = res_coefs + 2 * k;
+    int64_t* s4 = res_coefs + 3 * k;
 
-    for (int64_t i = 0; i < __k; ++i) {
-      int64_t c1 = __s2[i] + __t1[i] - __s1[i] - __s3[i];
-      int64_t c2 = __s3[i] + __t2[i] - __s2[i] - __s4[i];
-      __res_coefs[__k + i] = c1;
-      __res_coefs[__size + i] = c2;
+    for (int64_t i = 0; i < k; ++i) {
+      int64_t c1 = s2[i] + t1[i] - s1[i] - s3[i];
+      int64_t c2 = s3[i] + t2[i] - s2[i] - s4[i];
+      res_coefs[k + i] = c1;
+      res_coefs[size + i] = c2;
     }
 
-    free(__l);
-    free(__r);
-    free(__t);
+    free(l);
+    free(r);
+    free(t);
   }
 }
 
-polynomial_t* copy_polynomial(polynomial_t* __polynomial) {
-  polynomial_t* __res_polynomial =
-    allocate_polynomial(__polynomial->coefs.size - 1);
-  for (int64_t i = 0; i < __polynomial->coefs.size; ++i) {
-    __res_polynomial->coefs.coefs[i] = __polynomial->coefs.coefs[i];
+polynomial_t* copy_polynomial(polynomial_t* polynomial) {
+  polynomial_t* res_polynomial =
+    allocate_polynomial(polynomial->coefs.size - 1);
+  for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
+    res_polynomial->coefs.coefs[i] = polynomial->coefs.coefs[i];
   }
-  __res_polynomial->coefs.size = __polynomial->coefs.size;
-  __res_polynomial->letter = __polynomial->letter;
+  res_polynomial->coefs.size = polynomial->coefs.size;
+  res_polynomial->letter = polynomial->letter;
 
-  return __res_polynomial;
+  return res_polynomial;
 }
 
-polynomial_t* pow_polynomial(polynomial_t* __polynomial, int64_t __power) {
-  if (__power < 0) {
+polynomial_t* pow_polynomial(polynomial_t* polynomial, int64_t power) {
+  if (power < 0) {
     yyerror("Power must be postive number");
     exit(-1);
   }
-  polynomial_t* __copy = NULL;
-  if (__power % 2 == 1) {__copy = copy_polynomial(__polynomial); }
-  for (; __power != 1; __power /= 2) {
-    __polynomial = mul_polynomials(__polynomial, __polynomial);
+  if (power == 1) { return polynomial; }
+  polynomial_t* copy = NULL;
+  if (power % 2 == 1) {copy = copy_polynomial(polynomial); }
+  for (; power != 1; power /= 2) {
+    polynomial = mul_polynomials(polynomial, polynomial);
   }
-  if (__copy != NULL) {
-    __polynomial = mul_polynomials(__polynomial, __copy);
+  if (copy != NULL) {
+    polynomial = mul_polynomials(polynomial, copy);
   }
 
-  return __polynomial;
+  return polynomial;
 }
 
-void shrink_to_fit_polynomial(polynomial_t* __polynomial) {
-  int64_t __new_cap = pow2(__polynomial->coefs.size);
-  if (__new_cap == __polynomial->coefs.capacity) { return; }
+void shrink_to_fit_polynomial(polynomial_t* polynomial) {
+  int64_t new_cap = pow2(polynomial->coefs.size);
+  if (new_cap == polynomial->coefs.capacity) { return; }
 
-  int64_t* __new_coefs = (int64_t*)calloc(__new_cap, sizeof(int64_t));
-  if (__new_coefs == NULL) { return; }
-  memcpy(__new_coefs, __polynomial->coefs.coefs,
-    __polynomial->coefs.size * sizeof(int64_t));
+  int64_t* new_coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
+  if (new_coefs == NULL) { return; }
+  memcpy(new_coefs, polynomial->coefs.coefs,
+    polynomial->coefs.size * sizeof(int64_t));
 
-  int64_t* __tmp = __polynomial->coefs.coefs;
-  __polynomial->coefs.coefs = __new_coefs;
-  __new_coefs = __tmp;
+  int64_t* tmp = polynomial->coefs.coefs;
+  polynomial->coefs.coefs = new_coefs;
+  new_coefs = tmp;
 
-  __polynomial->coefs.capacity = __new_cap;
+  polynomial->coefs.capacity = new_cap;
 
-  free(__new_coefs);
+  free(new_coefs);
 }
 
-void deallocate_polynomial(polynomial_t* __polynomial) {
-  free(__polynomial->coefs.coefs);
-  free(__polynomial);
+void deallocate_polynomial(polynomial_t* polynomial) {
+  free(polynomial->coefs.coefs);
+  free(polynomial);
 }
 
 void is_valid_operation(
-  polynomial_t* __polynomial1,
-  polynomial_t* __polynomial2
+  polynomial_t* polynomial1,
+  polynomial_t* polynomial2
 ) {
-  if (__polynomial1->letter == 0 || __polynomial2->letter == 0) { return; }
-  else if (__polynomial1->letter != __polynomial2->letter) {
+  if (polynomial1->letter == 0 || polynomial2->letter == 0) { return; }
+  else if (polynomial1->letter != polynomial2->letter) {
     yyerror("Cannot perform operation between polynomials with different"
       " polynomial's variable");
     exit(-1);

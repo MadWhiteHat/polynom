@@ -14,14 +14,18 @@ void yyerror(const char* __msg) {
 extern FILE* yyin;
 
 int32_t main(int32_t argc, const char** argv) {
+  printf("Welcome to polynomial calculator!\n");
   if (argc == 2) {
-    yyin = fopen(argv[1], "r");
-    if (yyin == NULL) {
+    FILE* input = fopen(argv[1], "r");
+    if (input == NULL) {
       puts("Cannot open specified file");
       return 1;
     }
+    YY_BUFFER_STATE input_buffer = yy_create_buffer(input, YY_BUF_SIZE);
+    yy_switch_to_buffer(input_buffer);
     yyparse();
-    fclose(yyin);
+    yy_delete_buffer(input_buffer);
+    fclose(input);
   } else {
     yyin = stdin;
     yyparse();
