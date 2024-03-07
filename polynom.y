@@ -34,6 +34,7 @@
 %left '*' '/' '%'
 %right UNARY_MINUS
 %right '^'
+%right '='
 %nonassoc '(' ')'
 
 %%
@@ -98,7 +99,7 @@ variable:
                                         }
     | polynomial                        {
                                           add_variable_list(&var_list, NULL, $1);
-                                          print_variable($$);
+                                          print_polynomial($1);
                                         }
 
 %%
