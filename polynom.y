@@ -18,8 +18,6 @@
   polynomial_t* polynomial;
 }
 
-%destructor { deallocate_polynomial($$); } <polynomial>
-
 %token<letter> LETTER
 %token<num> PRINT
 %token<num> PRINT_VARS
@@ -35,7 +33,7 @@
 %right '='
 %left '+' '-'
 %left '*' '/' '%'
-%right UNARY_MINUS
+%right UMINUS
 %right '^'
 %nonassoc '(' ')'
 
@@ -53,14 +51,17 @@ line:
                                         print_polynomial($2);
                                         deallocate_polynomial($2);
                                       }
-    | variable EOL                    {  }
+    | variable EOL                    { }
     | YYEOF                           {
                                         remove_all_variables_list(&var_list);
                                         YYACCEPT;
                                       }
 
-polynomial: 
-    '-' polynomial %prec UNARY_MINUS  { $$ = neg_polynomial($2); }
+polynomial:
+    LETTER                            { $$ = create_polynomial(1, $1, 1); }
+    | NUMBER                          { $$ = create_polynomial($1, 0, 0); }
+    | NUMBER LETTER '^' power         { $$ = create_polynomial($1, $2, $4); }
+    | '-' polynomial %prec UMINUS     { $$ = neg_polynomial($2); }
 
     | '(' polynomial ')'              { $$ = $2; }
 
@@ -78,16 +79,11 @@ polynomial:
                                         is_valid_operation($1, $3);
                                         $$ = sum_polynomials($1, $3, '-');
                                       }
-    | LETTER                          { $$ = create_polynomial(1, $1, 1); }
-    | NUMBER                          { $$ = create_polynomial($1, 0, 0); }
-    | NUMBER LETTER                   { $$ = create_polynomial($1, $2, 1); }
-    | LETTER '^' power                { $$ = create_polynomial(1, $1, $3); }
-    | NUMBER LETTER '^' power         { $$ = create_polynomial($1, $2, $4); }
 
-power: 
+power:
     NUMBER                            { $$ = $1; }
 
-    | '-' power %prec UNARY_MINUS     { $$ = -$2; }
+    | '-' power %prec UMINUS          { $$ = -$2; }
 
     | '(' power ')'                   { $$ = $2; }
 
