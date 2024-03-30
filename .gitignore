@@ -78,3 +78,5 @@ dkms.conf
 
 *.yacc*
 *.lex*
+*output
+polynom

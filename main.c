@@ -14,7 +14,7 @@ void yyerror(const char* __msg) {
 extern FILE* yyin;
 
 int32_t main(int32_t argc, const char** argv) {
-  printf("Welcome to polynomial calculator!\n");
+  puts("Welcome to polynomial calculator!");
   if (argc == 2) {
     FILE* input = fopen(argv[1], "r");
     if (input == NULL) {
@@ -32,5 +32,6 @@ int32_t main(int32_t argc, const char** argv) {
   }
   yylex_destroy();
 
+  puts("Thank you for using our polynomial calculator!");
   return 0;
 }

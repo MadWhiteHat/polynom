@@ -14,7 +14,7 @@
 
 DIGIT [0-9]
 VAR [a-z]
-ID [_a-zA-Z0-9]+
+ID [_a-zA-Z][_a-zA-Z0-9]*
 SKIPPABLE [ \t\r]
 
 %%
@@ -30,7 +30,8 @@ SKIPPABLE [ \t\r]
                             return VARIABLE;
                           }
 \n                        { return EOL; }
-"exit"                    { return EXIT; }
+<<EOF>>                   { return YYEOF; }
+"exit"                    { return YYEOF; }
 "print"                   { return PRINT; } 
 "print vars"              { return PRINT_VARS;  }
 [^\*\/\+\-\r\n\(= ]\(     {
