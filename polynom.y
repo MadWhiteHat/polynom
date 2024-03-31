@@ -27,11 +27,11 @@
 
 %type<num> line
 %type<num> power
-%type<polynomial> monomial
-%type<polynomial> polynomial1
-%type<polynomial> polynomial2
-%type<polynomial> polynomial3
-%type<polynomial> polynomial4
+%type<polynomial> mono
+%type<polynomial> poly_add_prio
+%type<polynomial> poly_mul_prio
+%type<polynomial> poly_neg_prio
+%type<polynomial> poly_pow_prio
 %type<variable> variable
 
 %right '='
@@ -43,83 +43,84 @@
 
 %%
 
-input: %empty
-    | input line
-    ;
+input: 
+  %empty
+  | input line
+  ;
 
 line:
-    EOL                               { puts("Input string in empty"); }
-    | PRINT_VARS EOL                  { print_variables_list(var_list); }
-    | PRINT VARIABLE EOL              { print_variable($2); }
-    | PRINT polynomial1 EOL           {
-                                        print_polynomial($2);
-                                        deallocate_polynomial($2);
-                                      }
-    | variable EOL                    { }
-    | YYEOF                           {
-                                        remove_all_variables_list(&var_list);
-                                        YYACCEPT;
-                                      }
+  EOL                               { puts("Input string in empty"); }
+  | PRINT_VARS EOL                  { print_variables_list(var_list); }
+  | PRINT VARIABLE EOL              { print_variable($2); }
+  | PRINT poly_add_prio EOL           {
+                                      print_polynomial($2);
+                                      deallocate_polynomial($2);
+                                    }
+  | variable EOL                    { }
+  | YYEOF                           {
+                                      remove_all_variables_list(&var_list);
+                                      YYACCEPT;
+                                    }
 
-polynomial4:
-    polynomial4 '^' power             { $$ = pow_polynomial($1, $3); }
-    | '(' polynomial1 ')'             { $$ = $2; }
-    | monomial
+poly_pow_prio:
+  poly_pow_prio '^' power           { $$ = pow_polynomial($1, $3); }
+  | '(' poly_add_prio ')'           { $$ = $2; }
+  | mono
 
-polynomial3:
-    '-' polynomial4 %prec UMINUS      { $$ = neg_polynomial($2); }
-    | polynomial4                     { }
+poly_neg_prio:
+  '-' poly_pow_prio %prec UMINUS    { $$ = neg_polynomial($2); }
+  | poly_pow_prio                   { }
 
 
-polynomial2:
-    polynomial2 '*' polynomial3       {
-                                        is_valid_operation($1, $3);
-                                        $$ = mul_polynomials($1, $3);
-                                      }
-    | polynomial2 polynomial4         {
-                                        is_valid_operation($1, $2);
-                                        $$ = mul_polynomials($1, $2);
-                                      }
-    | polynomial3                     { }
+poly_mul_prio:
+  poly_mul_prio '*' poly_neg_prio   {
+                                      is_valid_operation($1, $3);
+                                      $$ = mul_polynomials($1, $3);
+                                    }
+  | poly_mul_prio poly_pow_prio     {
+                                      is_valid_operation($1, $2);
+                                      $$ = mul_polynomials($1, $2);
+                                    }
+  | poly_neg_prio                   { }
 
-polynomial1:
-      polynomial1 '+' polynomial2     {
-                                        is_valid_operation($1, $3);
-                                        $$ = sum_polynomials($1, $3, '+');
-                                      }
-    | polynomial1 '-' polynomial2     {
-                                        is_valid_operation($1, $3);
-                                        $$ = sum_polynomials($1, $3, '-');
-                                      }
-    | polynomial2                     { }
+poly_add_prio:
+    poly_add_prio '+' poly_mul_prio {
+                                      is_valid_operation($1, $3);
+                                      $$ = sum_polynomials($1, $3, '+');
+                                    }
+  | poly_add_prio '-' poly_mul_prio {
+                                      is_valid_operation($1, $3);
+                                      $$ = sum_polynomials($1, $3, '-');
+                                    }
+  | poly_mul_prio                   { }
 
-monomial:
-    LETTER                            { $$ = create_polynomial(1, $1, 1); }
-    | NUMBER                          { $$ = create_polynomial($1, 0, 0); }
+mono:
+  LETTER                            { $$ = create_polynomial(1, $1, 1); }
+  | NUMBER                          { $$ = create_polynomial($1, 0, 0); }
 
 power:
-    NUMBER                            { $$ = $1; }
+  NUMBER                            { $$ = $1; }
 
-    | '-' power %prec UMINUS          { $$ = -$2; }
+  | '(' power ')'                   { $$ = $2; }
 
-    | '(' power ')'                   { $$ = $2; }
+  | power '^' power                 { $$ = (int64_t)pow($1, $3); }
 
-    | power '^' power                 { $$ = (int64_t)pow($1, $3); }
+  | '-' power %prec UMINUS          { $$ = -$2; }
 
-    | power '*' power                 { $$ = $1 * $3; }
-    | power '/' power                 { $$ = $1 / $3; }
-    | power '%' power                 { $$ = $1 % $3; }
+  | power '*' power                 { $$ = $1 * $3; }
+  | power '/' power                 { $$ = $1 / $3; }
+  | power '%' power                 { $$ = $1 % $3; }
 
-    | power '+' power                 { $$ = $1 + $3; }
-    | power '-' power                 { $$ = $1 - $3; }
+  | power '+' power                 { $$ = $1 + $3; }
+  | power '-' power                 { $$ = $1 - $3; }
 
 variable:
-    VARIABLE '=' polynomial1          {
-                                        add_variable_list(&var_list, $1, $3);
-                                      }
-    | polynomial1                     {
-                                        add_variable_list(&var_list, NULL, $1);
-                                        print_polynomial($1);
-                                      }
+  VARIABLE '=' poly_add_prio        {
+                                      add_variable_list(&var_list, $1, $3);
+                                    }
+  | poly_add_prio                   {
+                                      add_variable_list(&var_list, NULL, $1);
+                                      print_polynomial($1);
+                                    }
 
 %%

@@ -109,6 +109,7 @@ polynomial_t* create_polynomial(
   char letter,
   int64_t power
 ) {
+  printf("Coef: %ld, Letter: %c, Power: %ld", coef, letter, power);
   polynomial_t* polynomial = allocate_polynomial(power);
   if (polynomial == NULL) { return NULL; }
   if (coef != 0) {
