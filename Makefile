@@ -13,6 +13,7 @@ all: clean
 clean:
 	@echo 'Cleaning up...'
 	@rm -f polynom.lex* polynom.yacc* polynom
+	@rm -rf output
 	@echo 'Done!'
 
 mem-run: all

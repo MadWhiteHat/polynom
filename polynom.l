@@ -30,11 +30,11 @@ SKIPPABLE [ \t\r]
                             return VARIABLE;
                           }
 \n                        { return EOL; }
-<<EOF>>                   { return YYEOF; }
-"exit"                    { return YYEOF; }
+<<EOF>>                   { return EXIT; }
+"exit"                    { return EXIT; }
 "print"                   { return PRINT; } 
 "print vars"              { return PRINT_VARS;  }
-[^\*\/\+\-\r\n\(= ]\(     {
+[^\*\/\+\-\^\r\n\(= ]\(   {
                             char tmp = yytext[0];
                             unput('(');
                             unput('*');
