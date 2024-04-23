@@ -23,10 +23,8 @@ SKIPPABLE [ \t\r]
 {DIGIT}+                  { yylval.num = atoi(yytext); return NUMBER; }
 {VAR}                     { yylval.letter = *yytext; return LETTER; }
 \${ID}                    {
-                            yylval.variable = create_variable(
-                              yytext + 1,
-                              yyleng - 1
-                            );
+                            yylval.variable = create_variable(yytext, yyleng);
+                            BEGIN(INITIAL);
                             return VARIABLE;
                           }
 \n                        { return EOL; }

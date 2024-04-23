@@ -296,7 +296,7 @@ polynomial_t* pow_polynomial(polynomial_t* polynomial, int64_t power) {
     exit(-1);
   }
 
-  if (power == 1) { return polynomial; }
+  if (power == 1) { return copy_polynomial(polynomial); }
   
   int64_t tmp_power = power;
   int64_t power_size = 0;

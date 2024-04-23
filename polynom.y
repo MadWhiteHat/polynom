@@ -31,7 +31,6 @@
 %type<num> pow_mul
 %type<num> pow_neg
 %type<num> pow_pow
-%type<num> pow_brackets
 %type<polynomial> mono
 %type<polynomial> poly_add
 %type<polynomial> poly_mul
@@ -70,7 +69,7 @@ line:
                                     }
 
 poly_pow:
-  poly_pow '^' pow_brackets         {
+  poly_pow '^' pow_pow              {
                                       $$ = pow_polynomial($1, $3);
                                       deallocate_polynomial($1);
                                     }
@@ -128,11 +127,8 @@ pow_neg:
   | pow_pow                         { }
 
 pow_pow:
-  pow_brackets '^' pow_pow          { $$ = (int64_t)pow($1, $3); }
-  | pow_brackets                    { }
-
-pow_brackets:
-  '(' pow_add ')'                   { $$ = $2; }
+  pow_pow '^' pow_pow               { $$ = (int64_t)pow($1, $3); }
+  | '(' pow_add ')'                 { $$ = $2; }
   | NUMBER                          { $$ = $1; }
 
 variable:
