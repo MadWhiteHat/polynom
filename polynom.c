@@ -5,9 +5,12 @@
 
 #include "polynom.h"
 
-void debug_polynomial(polynomial_t* polynomial) {
+// Static functions
+
+void
+debug_polynomial(polynomial_t* polynomial) {
   printf("ptr: %p\nlength: %ld\ncapacity: %ld\nletter: %c\n",
-    polynomial->coefs.coefs, polynomial->coefs.size,
+    (void*)polynomial->coefs.coefs, polynomial->coefs.size,
     polynomial->coefs.capacity, polynomial->letter);
   for (int64_t i = 0; i < polynomial->coefs.capacity; ++i) {
     printf("%ld ", polynomial->coefs.coefs[i]);
@@ -15,7 +18,8 @@ void debug_polynomial(polynomial_t* polynomial) {
   puts("");
 }
 
-int64_t pow2(int64_t num) {
+int64_t
+pow2(int64_t num) {
   int64_t res = 1;
 
   do { res *= 2; } while (res < num);
@@ -23,7 +27,109 @@ int64_t pow2(int64_t num) {
   return res;
 } 
 
-void print_polynomial(polynomial_t* polynomial) {
+// Constructor
+polynomial_t*
+create_polynomial(int64_t coef, char letter, int64_t power) {
+  polynomial_t* polynomial = allocate_polynomial(power);
+  if (polynomial == NULL) { return NULL; }
+  if (coef != 0) {
+    polynomial->coefs.coefs[power] = coef;
+    polynomial->coefs.size = power + 1;
+    polynomial->letter = letter;
+  } else {
+    polynomial->coefs.size = 0;
+    polynomial->letter = 0;
+  }
+
+  return polynomial;
+}
+
+// Destructor
+void
+delete_polynomial(polynomial_t* polynomial) {
+  if (polynomial) {
+    if (polynomial->coefs.coefs) { free(polynomial->coefs.coefs); }
+    free(polynomial);
+  }
+}
+
+// Copy constructor
+polynomial_t*
+copy_polynomial(polynomial_t* polynomial) {
+  polynomial_t* res_polynomial =
+    allocate_polynomial(polynomial->coefs.size - 1);
+  for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
+    res_polynomial->coefs.coefs[i] = polynomial->coefs.coefs[i];
+  }
+  res_polynomial->coefs.size = polynomial->coefs.size;
+  res_polynomial->letter = polynomial->letter;
+
+  return res_polynomial;
+}
+
+// Memory management
+polynomial_t*
+allocate_polynomial(int64_t power) {
+  if (power < 0) {
+    yyerror("Power must be postive number");
+    exit(-1);
+  }
+
+  polynomial_t* polynomial = (polynomial_t*)calloc(1, sizeof(polynomial_t));
+  if (polynomial == NULL) { return NULL; }
+
+  int64_t req_cap = power + 1;
+  int64_t new_cap = pow2(req_cap);
+  polynomial->coefs.coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
+
+  if (polynomial->coefs.coefs == NULL) {
+    free(polynomial);
+    polynomial = NULL;
+  }
+  polynomial->coefs.capacity = new_cap;
+
+  return polynomial;
+}
+
+void
+shrink_to_fit_polynomial(polynomial_t* polynomial) {
+  int64_t new_cap = pow2(polynomial->coefs.size);
+  if (new_cap == polynomial->coefs.capacity) { return; }
+
+  int64_t* new_coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
+  if (new_coefs == NULL) { return; }
+  memcpy(new_coefs, polynomial->coefs.coefs,
+    polynomial->coefs.size * sizeof(int64_t));
+
+  int64_t* tmp = polynomial->coefs.coefs;
+  polynomial->coefs.coefs = new_coefs;
+  new_coefs = tmp;
+
+  polynomial->coefs.capacity = new_cap;
+
+  free(new_coefs);
+}
+
+// Opertaions
+void
+is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs) {
+  if (lhs == NULL || rhs == NULL) {
+    yyerror("Invalid polynomial");
+    exit(-1);
+  } else if (lhs->letter == 0 || rhs->letter == 0) { return; }
+  else if (lhs->letter != rhs->letter) {
+    yyerror("Cannot perform operation between polynomials with different"
+      " polynomial's variable");
+    exit(-1);
+  }
+}
+
+void
+print_polynomial(polynomial_t* polynomial) {
+  if (!polynomial) {
+    printf("Polynomial is NULL\n");
+    return;
+  }
   int64_t size = polynomial->coefs.size;
   if (size == 0) {
     puts("0");
@@ -83,162 +189,107 @@ void print_polynomial(polynomial_t* polynomial) {
   puts("");
 }
 
-polynomial_t* allocate_polynomial(int64_t power) {
-  if (power < 0) {
-    yyerror("Power must be postive number");
-    exit(-1);
+polynomial_t*
+sum_polynomials(polynomial_t* lhs, polynomial_t* rhs, const char action) {
+  // Rhs with applied '-' sign if action = '-', otherwise neg_rhs = rhs;
+  polynomial_t* neg_rhs = rhs;
+  if (action == '-') {
+    neg_rhs = neg_polynomial(rhs);
   }
-
-  polynomial_t* polynomial = (polynomial_t*)calloc(1, sizeof(polynomial_t));
-  if (polynomial == NULL) { return NULL; }
-
-  int64_t req_cap = power + 1;
-  int64_t new_cap = pow2(req_cap);
-  polynomial->coefs.coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
-
-  if (polynomial->coefs.coefs == NULL) {
-    free(polynomial);
-    polynomial = NULL;
-  }
-  polynomial->coefs.capacity = new_cap;
-
-  return polynomial;
-}
-
-polynomial_t* create_polynomial(
-  int64_t coef,
-  char letter,
-  int64_t power
-) {
-  polynomial_t* polynomial = allocate_polynomial(power);
-  if (polynomial == NULL) { return NULL; }
-  if (coef != 0) {
-    polynomial->coefs.coefs[power] = coef;
-    polynomial->coefs.size = power + 1;
-    polynomial->letter = letter;
-  } else {
-    polynomial->coefs.size = 0;
-    polynomial->letter = 0;
-  }
-
-  return polynomial;
-}
-
-polynomial_t* neg_polynomial(polynomial_t* polynomial) {
-  for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
-    polynomial->coefs.coefs[i] = -polynomial->coefs.coefs[i];
-  }
-  return polynomial;
-}
-
-
-polynomial_t* sum_polynomials(
-  polynomial_t* polynomial1,
-  polynomial_t* polynomial2,
-  const char action
-) {
-  if (action == '-') { neg_polynomial(polynomial2); }
 
   polynomial_t* min_polynomial = NULL;
   polynomial_t* max_polynomial = NULL;
-  
-  if (polynomial1->coefs.size >= polynomial2->coefs.size) {
-    max_polynomial = polynomial1;
-    min_polynomial = polynomial2;
+  polynomial_t* res = NULL;
+
+  if (lhs->coefs.size >= neg_rhs->coefs.size) {
+    max_polynomial = lhs;
+    min_polynomial = neg_rhs;
   } else {
-    max_polynomial = polynomial2;
-    min_polynomial = polynomial1;
+    max_polynomial = neg_rhs;
+    min_polynomial = lhs;
   }
+
+  res = copy_polynomial(max_polynomial);
 
   for (int64_t i = 0; i < min_polynomial->coefs.size; ++i) {
-    max_polynomial->coefs.coefs[i] += min_polynomial->coefs.coefs[i];
+    res->coefs.coefs[i] += min_polynomial->coefs.coefs[i];
   }
 
-  int64_t new_size = max_polynomial->coefs.size;
+  int64_t new_size = res->coefs.size;
   while (new_size) {
-    if (max_polynomial->coefs.coefs[new_size - 1] != 0) { break; } 
+    if (res->coefs.coefs[new_size - 1] != 0) { break; } 
     --new_size;
   }
   if (new_size == 0) {
-    free(max_polynomial->coefs.coefs);
-    max_polynomial->coefs.coefs = NULL;
-    max_polynomial->coefs.capacity = 0;
+    free(res->coefs.coefs);
+    res->coefs.coefs = NULL;
+    res->coefs.capacity = 0;
   }
-  max_polynomial->coefs.size = new_size;
+  res->coefs.size = new_size;
 
-  deallocate_polynomial(min_polynomial);
-  return max_polynomial;
+  // Cleanup neg_rhs if action is '-'
+  if(neg_rhs != rhs) { delete_polynomial(neg_rhs); }
+
+  return res;
 }
 
-polynomial_t* mul_polynomials(
-  polynomial_t* polynomial1,
-  polynomial_t* polynomial2
-) {
+polynomial_t*
+mul_polynomials(polynomial_t* lhs, polynomial_t* rhs) {
 
-  int64_t max_cap =
-    MAX(polynomial1->coefs.capacity, polynomial2->coefs.capacity);
+  int64_t max_cap = MAX(lhs->coefs.capacity, rhs->coefs.capacity);
   int64_t max_power = max_cap - 1;
 
-  polynomial_t* tmp_polynomial1 = polynomial1;
-  polynomial_t* tmp_polynomial2 = polynomial2;
+  polynomial_t* tmp_lhs = lhs;
+  polynomial_t* tmp_rhs = rhs;
+  polynomial_t* res = NULL;
 
-  if (polynomial1->coefs.capacity != max_cap) {
-    tmp_polynomial1 = allocate_polynomial(max_power);
+  if (lhs->coefs.capacity != max_cap) {
+    tmp_lhs = allocate_polynomial(max_power);
     memcpy(
-      tmp_polynomial1->coefs.coefs,
-      polynomial1->coefs.coefs,
-      polynomial1->coefs.size * sizeof(int64_t)
+      tmp_lhs->coefs.coefs,
+      lhs->coefs.coefs,
+      lhs->coefs.size * sizeof(int64_t)
     );
-    tmp_polynomial1->letter = polynomial1->letter;
-    tmp_polynomial1->coefs.size = polynomial1->coefs.size;
-  } else if (polynomial2->coefs.capacity != max_cap) {
-    tmp_polynomial2 = allocate_polynomial(max_cap - 1);
+    tmp_lhs->letter = lhs->letter;
+    tmp_lhs->coefs.size = lhs->coefs.size;
+  } else if (rhs->coefs.capacity != max_cap) {
+    tmp_rhs = allocate_polynomial(max_cap - 1);
     memcpy(
-      tmp_polynomial2->coefs.coefs,
-      polynomial2->coefs.coefs,
-      polynomial2->coefs.size * sizeof(int64_t)
+      tmp_rhs->coefs.coefs,
+      rhs->coefs.coefs,
+      rhs->coefs.size * sizeof(int64_t)
     );
-    tmp_polynomial2->letter = polynomial2->letter;
-    tmp_polynomial2->coefs.size = polynomial2->coefs.size;
+    tmp_rhs->letter = rhs->letter;
+    tmp_rhs->coefs.size = rhs->coefs.size;
   }
 
-  polynomial_t* res_polynomial = allocate_polynomial(2 * max_cap - 1);
+  res = allocate_polynomial(2 * max_cap - 1);
 
   karatsuba(
-    tmp_polynomial1->coefs.coefs,
-    tmp_polynomial2->coefs.coefs,
-    res_polynomial->coefs.coefs,
+    tmp_lhs->coefs.coefs,
+    tmp_rhs->coefs.coefs,
+    res->coefs.coefs,
     max_cap
   );
 
-  int64_t power = res_polynomial->coefs.capacity - 1;
-  while (res_polynomial->coefs.coefs[power] == 0) { --power; }
-  res_polynomial->coefs.size = power + 1;
-  res_polynomial->letter = (polynomial1->letter != 0) ?
-    polynomial1->letter : polynomial2->letter;
+  int64_t power = res->coefs.capacity - 1;
+  while (res->coefs.coefs[power] == 0) { --power; }
+  res->coefs.size = power + 1;
+  res->letter = (lhs->letter != 0) ? lhs->letter : rhs->letter;
 
-  shrink_to_fit_polynomial(res_polynomial);
+  shrink_to_fit_polynomial(res);
 
-  if (tmp_polynomial1 != polynomial1) {
-    deallocate_polynomial(tmp_polynomial1);
-  }
+  if (tmp_lhs != lhs) { delete_polynomial(tmp_lhs); }
+  if (tmp_rhs != rhs) { delete_polynomial(tmp_rhs); }
 
-  if (tmp_polynomial2 != polynomial2) {
-    deallocate_polynomial(tmp_polynomial2);
-  }
-
-  return res_polynomial;
+  return res;
 }
 
-void karatsuba(
-  int64_t* coefs1,
-  int64_t* coefs2,
-  int64_t* res_coefs,
-  int64_t size) {
+void
+karatsuba(int64_t* coefs1, int64_t* coefs2, int64_t* res_coefs, int64_t size) {
   if (size <= 64) {
     for (int64_t i = 0; i < size; ++i) {
       for (int64_t j = 0; j < size; ++j) {
-        /*printf("res_coefs[%ld] = %ld + %ld + %ld\n", i+j, res_coefs[i+j], coefs1[i], coefs2[j]);*/
         res_coefs[i + j] += coefs1[i] * coefs2[j];
       }
     }
@@ -278,86 +329,45 @@ void karatsuba(
   }
 }
 
-polynomial_t* copy_polynomial(polynomial_t* polynomial) {
-  polynomial_t* res_polynomial =
-    allocate_polynomial(polynomial->coefs.size - 1);
-  for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
-    res_polynomial->coefs.coefs[i] = polynomial->coefs.coefs[i];
+polynomial_t*
+neg_polynomial(polynomial_t* polynomial) {
+  polynomial_t* res = copy_polynomial(polynomial);
+  for (int64_t i = 0; i < res->coefs.size; ++i) {
+    res->coefs.coefs[i] = -res->coefs.coefs[i];
   }
-  res_polynomial->coefs.size = polynomial->coefs.size;
-  res_polynomial->letter = polynomial->letter;
-
-  return res_polynomial;
+  return res;
 }
 
-polynomial_t* pow_polynomial(polynomial_t* polynomial, int64_t power) {
+polynomial_t*
+pow_polynomial(polynomial_t* polynomial, int64_t power) {
+  polynomial_t* res = NULL;
+  polynomial_t* tmp = NULL;
+
   if (power < 0) {
     yyerror("Power must be postive number");
     exit(-1);
   }
 
-  if (power == 1) { return copy_polynomial(polynomial); }
-  
+  res = copy_polynomial(polynomial);
+
+  if (power == 1) { return res; }
+
   int64_t tmp_power = power;
   int64_t power_size = 0;
 
-  for (;tmp_power; tmp_power >>= 1) { ++power_size; }
+  for (;tmp_power > 1; tmp_power >>= 1) { ++power_size; }
 
-  polynomial_t* res = create_polynomial(1, 0, 0);
-  polynomial_t* tmp = res;
+  for (int64_t i = power_size - 1; i >= 0; --i) {
+    tmp = res;
+    res = mul_polynomials(tmp, tmp);
+    delete_polynomial(tmp);
 
-  for (int64_t i = power_size - 1; i > 0; --i) {
     if (power & 1 << i) {
       tmp = res;
       res = mul_polynomials(tmp, polynomial);
-      deallocate_polynomial(tmp);
+      delete_polynomial(tmp);
     }
-
-    tmp = res;
-    res = mul_polynomials(tmp, tmp);
-    deallocate_polynomial(tmp);
-  }
-
-  if (power % 2 == 1) {
-    tmp = res;
-    res = mul_polynomials(tmp, polynomial);
-    deallocate_polynomial(tmp);
   }
 
   return res;
-}
-
-void shrink_to_fit_polynomial(polynomial_t* polynomial) {
-  int64_t new_cap = pow2(polynomial->coefs.size);
-  if (new_cap == polynomial->coefs.capacity) { return; }
-
-  int64_t* new_coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
-  if (new_coefs == NULL) { return; }
-  memcpy(new_coefs, polynomial->coefs.coefs,
-    polynomial->coefs.size * sizeof(int64_t));
-
-  int64_t* tmp = polynomial->coefs.coefs;
-  polynomial->coefs.coefs = new_coefs;
-  new_coefs = tmp;
-
-  polynomial->coefs.capacity = new_cap;
-
-  free(new_coefs);
-}
-
-void deallocate_polynomial(polynomial_t* polynomial) {
-  free(polynomial->coefs.coefs);
-  free(polynomial);
-}
-
-void is_valid_operation(
-  polynomial_t* polynomial1,
-  polynomial_t* polynomial2
-) {
-  if (polynomial1->letter == 0 || polynomial2->letter == 0) { return; }
-  else if (polynomial1->letter != polynomial2->letter) {
-    yyerror("Cannot perform operation between polynomials with different"
-      " polynomial's variable");
-    exit(-1);
-  }
 }

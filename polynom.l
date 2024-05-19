@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "variable_list.h"
+#include "variable.h"
 #include "polynom.yacc.h"
 %}
 
@@ -14,24 +14,25 @@
 
 DIGIT [0-9]
 VAR [a-z]
-ID [_a-zA-Z][_a-zA-Z0-9]*
+ID [_a-zA-Z0-9]+
 SKIPPABLE [ \t\r]
+
+%x VAR_DEF
 
 %%
 
 {SKIPPABLE}+              ;
 {DIGIT}+                  { yylval.num = atoi(yytext); return NUMBER; }
 {VAR}                     { yylval.letter = *yytext; return LETTER; }
-\${ID}                    {
-                            yylval.variable = create_variable(yytext, yyleng);
-                            BEGIN(INITIAL);
-                            return VARIABLE;
+\$                        {
+                            BEGIN(VAR_DEF);
+                            return *yytext;
                           }
 \n                        { return EOL; }
 <<EOF>>                   { return EXIT; }
 "exit"                    { return EXIT; }
-"print"                   { return PRINT; } 
-"print vars"              { return PRINT_VARS;  }
+"echo"                    { return PRINT; } 
+"env"                     { return PRINT_VARS;  }
 [^\*\/\+\-\^\r\n\(= ]\(   {
                             char tmp = yytext[0];
                             unput('(');
@@ -43,6 +44,14 @@ SKIPPABLE [ \t\r]
                             unput('*');
                             unput(')');
                           }
-.                         { return *yytext; }
 
+<VAR_DEF>{ID}             {
+                            yylval.variable_name = create_variable_name(
+                              yytext, yyleng
+                            );
+                            BEGIN(INITIAL);
+                            return VARIABLE;
+                          }
+<VAR_DEF>.                { return *yytext; }
+.                         { return *yytext; }
 %%

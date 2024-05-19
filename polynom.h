@@ -1,7 +1,6 @@
 #ifndef _POLYNOM_H
 #define _POLYNOM_H
 
-#include <stdio.h>
 #include <stdint.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -18,46 +17,50 @@ typedef struct polynomial {
   char letter;
 } polynomial_t;
 
-extern void print_polynomial(polynomial_t* polynomial);
-extern polynomial_t* allocate_polinomial(int64_t power);
-extern polynomial_t* create_polynomial(
-  int64_t coef,
-  char letter,
-  int64_t power
-);
+// Constructor
+polynomial_t*
+create_polynomial(int64_t coef, char letter, int64_t power);
 
-extern polynomial_t* neg_polynomial(polynomial_t* polynomial);
+// Destructor
+void
+delete_polynomial(polynomial_t* polynomial);
 
-extern polynomial_t* sum_polynomials(
-  polynomial_t* polynomial1,
-  polynomial_t* polynomial2,
-  const char action
-);
+// Copy constructor
+polynomial_t*
+copy_polynomial(polynomial_t* polynomial);
 
-extern polynomial_t* mul_polynomials(
-  polynomial_t* polynomial1,
-  polynomial_t* polynomial2
-);
+// Polynomial memory resources management
+polynomial_t*
+allocate_polynomial(int64_t power);
 
-extern void karatsuba(
-  int64_t* coefs1,
-  int64_t* coefs2,
-  int64_t* res_coefs,
-  int64_t size
-);
+void
+shrink_to_fit_polynomial(polynomial_t* polynomial);
 
-extern polynomial_t* copy_polynomial(polynomial_t* polynomial);
-extern polynomial_t* pow_polynomial(polynomial_t* polynomial, int64_t power);
-extern void shrink_to_fit_polynomial(polynomial_t* polynomial);
+// Polynomial operations
+void
+is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs);
 
-extern void is_valid_operation(
-  polynomial_t* polynomial1,
-  polynomial_t* polynomial2
-);
+void
+print_polynomial(polynomial_t* polynomial);
 
-extern void deallocate_polynomial(polynomial_t* polynomial);
+polynomial_t*
+sum_polynomials(polynomial_t* lhs, polynomial_t* rhs, const char action);
 
-extern void yyerror(const char* msg);
+polynomial_t*
+mul_polynomials(polynomial_t* lhs, polynomial_t* rhs);
+
+void
+karatsuba(int64_t* coefs1, int64_t* coefs2, int64_t* res_coefs, int64_t size);
+
+polynomial_t*
+neg_polynomial(polynomial_t* polynomial);
+
+polynomial_t*
+pow_polynomial(polynomial_t* polynomial, int64_t power);
+
+void
+yyerror(const char* msg);
+
 extern int yylex();
 
 #endif // _POLYNOM_H
