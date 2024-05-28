@@ -7,10 +7,6 @@
 #include "polynom.lex.h"
 #include "polynom.yacc.h"
 
-void yyerror(const char* __msg) {
-  printf("ERROR: %s\n", __msg);
-}
-
 extern FILE* yyin;
 
 int32_t main(int32_t argc, const char** argv) {

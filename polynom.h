@@ -58,9 +58,6 @@ neg_polynomial(polynomial_t* polynomial);
 polynomial_t*
 pow_polynomial(polynomial_t* polynomial, int64_t power);
 
-void
-yyerror(const char* msg);
-
 extern int yylex();
 
 #endif // _POLYNOM_H

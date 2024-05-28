@@ -20,6 +20,10 @@ create_variable_name(char* var_name, uint32_t var_length);
 void
 delete_variable_name(variable_name_t* var_name);
 
+// Copy constructor
+variable_name_t*
+copy_variable_name(variable_name_t* var_name);
+
 // Operations
 void
 print_variable_name(variable_name_t* var_name);
@@ -48,6 +52,9 @@ is_valid_variable_operation(variable_t* lhs, variable_t* rhs);
 
 void
 is_valid_variable(variable_t* var);
+
+void
+is_persistent_variable(variable_t* var);
 
 void
 print_variable(variable_t* var);

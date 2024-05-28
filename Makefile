@@ -10,12 +10,11 @@ yacc: lex
 
 parser: yacc
 	@echo 'Creating parser...'
-	@gcc polynom.lex.c polynom.yacc.c polynom.c variable.c variable_tree.c main.c \
-		-Wall -Wextra -pedantic -o polynom -g -lm
+	@gcc polynom.lex.c polynom.yacc.c \
+		polynom.c variable.c variable_tree.c errors.c \
+		main.c \
+		 -Wall -Wextra -pedantic -o polynom -g -lm
 	@echo 'Done!'
-
-test: variable.c test_main.c polynom.c variable_tree.c
-	@gcc variable.c test_main.c polynom.c variable_tree.c -o test -g
 
 clean:
 	@echo 'Cleaning up...'
@@ -24,6 +23,3 @@ clean:
 	@echo 'Done!'
 
 all: clean parser
-
-mem-run: all
-	@valgrind --leak-check=full --show-leak-kinds=all ./polynom test.txt

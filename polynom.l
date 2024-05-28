@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "errors.h"
 #include "variable.h"
 #include "polynom.yacc.h"
 %}
@@ -16,6 +17,7 @@ DIGIT [0-9]
 VAR [a-z]
 ID [_a-zA-Z0-9]+
 SKIPPABLE [ \t\r]
+VALID_SYMS [+\-*/%^()$=]
 
 %x VAR_DEF
 
@@ -50,8 +52,14 @@ SKIPPABLE [ \t\r]
                               yytext, yyleng
                             );
                             BEGIN(INITIAL);
-                            return VARIABLE;
+                            return VAR_NAME;
                           }
-<VAR_DEF>.                { return *yytext; }
-.                         { return *yytext; }
+<VAR_DEF>.                { return INVALID_VARIABLE_NAME; }
+{VALID_SYMS}              { return *yytext; }
+.                         {
+                            print_error(
+                              LEXICAL, "invalid token \'%c\'", *yytext
+                            );
+                            exit(-1);
+                          }
 %%

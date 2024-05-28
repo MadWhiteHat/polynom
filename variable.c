@@ -2,7 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "errors.h"
 #include "variable.h"
+#include "variable_tree.h"
 
 //-------------------------------Variable name--------------------------------//
 
@@ -34,6 +36,12 @@ delete_variable_name(variable_name_t* var_name) {
     if (var_name->buffer) { free(var_name->buffer); }
     free(var_name);
   }
+}
+
+// Copy constructor
+variable_name_t*
+copy_variable_name(variable_name_t* var_name) {
+  return create_variable_name(var_name->buffer, var_name->length);
 }
 
 // Opertaions
@@ -99,7 +107,17 @@ void is_valid_variable_operation(variable_t* lhs, variable_t* rhs) {
 void
 is_valid_variable(variable_t* var) {
   if (!var) { 
-    yyerror("Invalid variable");
+    print_error(SEMANTICS, "invalid variable");
+    exit(-1);
+  }
+}
+
+// Checks if isn't temporary
+void
+is_persistent_variable(variable_t* var) {
+  is_valid_variable(var);
+  if (!var->name) {
+    print_error(SEMANTICS, "assignment to rvalue");
     exit(-1);
   }
 }
@@ -125,7 +143,8 @@ compare_variables(variable_t* lhs, variable_t* rhs) {
 
 void
 try_delete_variable(variable_t* var) {
-  if (!var->name) { delete_variable(var); }
+  variable_t* tree_var = find_variable_by_name(root, var->name);
+  if (tree_var != var) { delete_variable(var); }
 }
 
 variable_t*

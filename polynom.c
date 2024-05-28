@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "polynom.h"
+#include "errors.h"
 
 // Static functions
 
@@ -71,7 +72,7 @@ copy_polynomial(polynomial_t* polynomial) {
 polynomial_t*
 allocate_polynomial(int64_t power) {
   if (power < 0) {
-    yyerror("Power must be postive number");
+    print_error(SEMANTICS, "power must be a positive number");
     exit(-1);
   }
 
@@ -114,12 +115,12 @@ shrink_to_fit_polynomial(polynomial_t* polynomial) {
 void
 is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs) {
   if (lhs == NULL || rhs == NULL) {
-    yyerror("Invalid polynomial");
+    print_error(SEMANTICS, "invalid polynomial");
     exit(-1);
   } else if (lhs->letter == 0 || rhs->letter == 0) { return; }
   else if (lhs->letter != rhs->letter) {
-    yyerror("Cannot perform operation between polynomials with different"
-      " polynomial's variable");
+    print_error(SEMANTICS, "Cannot perform operation between polynomials with"
+      " different polynomial's variable");
     exit(-1);
   }
 }
@@ -344,9 +345,11 @@ pow_polynomial(polynomial_t* polynomial, int64_t power) {
   polynomial_t* tmp = NULL;
 
   if (power < 0) {
-    yyerror("Power must be postive number");
+    print_error(SEMANTICS, "power must be postive number");
     exit(-1);
   }
+
+  if (power == 0) { return create_polynomial(1, 0, 0); }
 
   res = copy_polynomial(polynomial);
 

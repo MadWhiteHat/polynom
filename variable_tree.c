@@ -117,6 +117,7 @@ delete_tree(tree_node_t* node) {
   if (!node) { return; }
   delete_tree(node->left);
   delete_tree(node->right);
+  node->left = node->right = NULL;
   delete_variable(node->variable);
   free(node);
 }
