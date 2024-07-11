@@ -53,6 +53,8 @@ is_valid_variable_operation(variable_t* lhs, variable_t* rhs);
 void
 is_valid_variable(variable_t* var);
 
+void is_initialized_variable(variable_t* var);
+
 void
 is_persistent_variable(variable_t* var);
 

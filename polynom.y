@@ -78,7 +78,10 @@ line:
                                 delete_polynomial($2);
                                 ++line;
                               }
-  | var_eq EOL                { ++line; }
+  | var_eq EOL                {
+                                is_valid_variable($1);
+                                is_initialized_variable($1);
+                                ++line; }
   | EXIT                      {
                                 delete_tree(root);
                                 YYACCEPT;
@@ -118,7 +121,7 @@ poly_mul:
                                 delete_polynomial($2);
                                 delete_polynomial($1);
                               }
-  | poly_mul '/' pow_neg      {
+  | poly_mul '/' poly_neg      {
                                 //Invalid operation
                                 print_error(SYNTAX,
                                   "polynomial division in not supported"
@@ -216,15 +219,19 @@ var_neg:
   '-' var_neg %prec UMINUS    {
                                 is_valid_variable($2);
                                 $$ = neg_variable($2);
-                                delete_variable($2);
+                                try_delete_variable($2);
                               }
   | var_pow                   { $$ = $1; }
 
 var_pow:
-  var_pow '^' pow_pow         {
-                                is_valid_variable($1);
-                                $$ = pow_variable($1, $3);
-                                delete_variable($1);
+  var '^' var_pow             {
+                                is_valid_variable_operation($1, $3);
+                                $$ = pow_variable(
+                                  $1,
+                                  convert_polynomial_to_power($3->polynomial)
+                                );
+                                try_delete_variable($1);
+                                try_delete_variable($3);
                               }
   | var                       { $$ = $1; }
 

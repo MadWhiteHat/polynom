@@ -1,0 +1,93 @@
+Command: ./polynom tests/assign-parentheses-letter-letter.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-letter-number.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-letter-parentheses-letter.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-letter-parentheses-number.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-letter-parentheses-varname.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-letter-varname.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-number-letter.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-number-number.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-number-parentheses-letter.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-number-parentheses-number.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-number-parentheses-varname.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-number-varname.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-varname-letter.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-varname-number.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-varname-parentheses-letter.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-varname-parentheses-number.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-varname-parentheses-varname.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-parentheses-varname-varname.txt
+Syntax error in line 1: unknown syntax
+
+Command: ./polynom tests/assign-varname-parentheses-varname.txt
+Invalid read of size 8
+   at 0x10C85F: copy_polynomial (polynom.c:61)
+   by 0x10BE41: yyparse (polynom.y:178)
+   by 0x10E895: main (main.c:22)
+ Address 0x8 is not stack'd, malloc'd or (recently) free'd
+
+
+Process terminating with default action of signal 11 (SIGSEGV): dumping core
+ Access not within mapped region at address 0x8
+   at 0x10C85F: copy_polynomial (polynom.c:61)
+   by 0x10BE41: yyparse (polynom.y:178)
+   by 0x10E895: main (main.c:22)
+ If you believe this happened as a result of a stack
+ overflow in your program's main thread (unlikely but
+ possible), you can try to increase the size of the
+ main thread stack using the --main-stacksize= flag.
+ The main thread stack size used in this run was 8388608.
+
+Command: ./polynom tests/assign-varname-varname.txt
+
+Invalid read of size 8
+   at 0x10C85F: copy_polynomial (polynom.c:61)
+   by 0x10BE41: yyparse (polynom.y:178)
+   by 0x10E895: main (main.c:22)
+ Address 0x8 is not stack'd, malloc'd or (recently) free'd
+
+
+Process terminating with default action of signal 11 (SIGSEGV): dumping core
+ Access not within mapped region at address 0x8
+   at 0x10C85F: copy_polynomial (polynom.c:61)
+   by 0x10BE41: yyparse (polynom.y:178)
+   by 0x10E895: main (main.c:22)
+ If you believe this happened as a result of a stack
+ overflow in your program's main thread (unlikely but
+ possible), you can try to increase the size of the
+ main thread stack using the --main-stacksize= flag.
+ The main thread stack size used in this run was 8388608.
+

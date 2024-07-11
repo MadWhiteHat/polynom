@@ -40,6 +40,8 @@ shrink_to_fit_polynomial(polynomial_t* polynomial);
 void
 is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs);
 
+void is_valid_polynomial(polynomial_t* polynomial);
+
 void
 print_polynomial(polynomial_t* polynomial);
 
@@ -57,6 +59,9 @@ neg_polynomial(polynomial_t* polynomial);
 
 polynomial_t*
 pow_polynomial(polynomial_t* polynomial, int64_t power);
+
+int64_t
+convert_polynomial_to_power(polynomial_t* polynomial);
 
 extern int yylex();
 

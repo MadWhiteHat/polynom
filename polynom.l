@@ -60,6 +60,7 @@ VALID_SYMS [+\-*/%^()$=]
                             print_error(
                               LEXICAL, "invalid token \'%c\'", *yytext
                             );
+                            delete_tree(root);
                             exit(-1);
                           }
 %%

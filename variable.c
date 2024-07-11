@@ -101,13 +101,22 @@ void delete_variable(variable_t* var) {
 void is_valid_variable_operation(variable_t* lhs, variable_t* rhs) {
   is_valid_variable(lhs);
   is_valid_variable(rhs);
+  is_initialized_variable(lhs);
+  is_initialized_variable(rhs);
   is_valid_polynomial_operation(lhs->polynomial, rhs->polynomial);
 }
 
 void
 is_valid_variable(variable_t* var) {
-  if (!var) { 
+  if (!var) {
     print_error(SEMANTICS, "invalid variable");
+    exit(-1);
+  }
+}
+
+void is_initialized_variable(variable_t* var) {
+  if (var->polynomial == NULL) {
+    print_error(SEMANTICS, "uninitialized variable '%s'", var->name->buffer);
     exit(-1);
   }
 }

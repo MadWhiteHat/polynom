@@ -57,7 +57,7 @@ delete_polynomial(polynomial_t* polynomial) {
 // Copy constructor
 polynomial_t*
 copy_polynomial(polynomial_t* polynomial) {
-  polynomial_t* res_polynomial =
+  polynomial_t* res_polynomial = 
     allocate_polynomial(polynomial->coefs.size - 1);
   for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
     res_polynomial->coefs.coefs[i] = polynomial->coefs.coefs[i];
@@ -114,13 +114,19 @@ shrink_to_fit_polynomial(polynomial_t* polynomial) {
 // Opertaions
 void
 is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs) {
-  if (lhs == NULL || rhs == NULL) {
-    print_error(SEMANTICS, "invalid polynomial");
-    exit(-1);
-  } else if (lhs->letter == 0 || rhs->letter == 0) { return; }
+  is_valid_polynomial(lhs);
+  is_valid_polynomial(rhs);
+  if (lhs->letter == 0 || rhs->letter == 0) { return; }
   else if (lhs->letter != rhs->letter) {
     print_error(SEMANTICS, "Cannot perform operation between polynomials with"
       " different polynomial's variable");
+    exit(-1);
+  }
+}
+
+void is_valid_polynomial(polynomial_t* polynomial) {
+  if (polynomial == NULL) {
+    print_error(SEMANTICS, "invalid polynomial");
     exit(-1);
   }
 }
@@ -344,12 +350,22 @@ pow_polynomial(polynomial_t* polynomial, int64_t power) {
   polynomial_t* res = NULL;
   polynomial_t* tmp = NULL;
 
+  // Debug
+  printf("Power: %ld\n", power);
+  print_polynomial(polynomial);
+
   if (power < 0) {
     print_error(SEMANTICS, "power must be postive number");
     exit(-1);
   }
 
-  if (power == 0) { return create_polynomial(1, 0, 0); }
+  if (power == 0) {
+    if (polynomial->coefs.size == 0) {
+      print_error(SEMANTICS, "undefined result of 0^0");
+      exit(-1);
+    }
+    else { return create_polynomial(1, 0, 0); }
+  }
 
   res = copy_polynomial(polynomial);
 
@@ -373,4 +389,15 @@ pow_polynomial(polynomial_t* polynomial, int64_t power) {
   }
 
   return res;
+}
+
+int64_t
+convert_polynomial_to_power(polynomial_t* polynomial) {
+  if (polynomial->coefs.size > 1) {
+    print_error(SEMANTICS, "Cannot power polynomial to polynomial");
+    exit(-1);
+  } else if (polynomial->coefs.size == 0) {
+    return 0;
+  }
+  return polynomial->coefs.coefs[0];
 }
