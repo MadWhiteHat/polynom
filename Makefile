@@ -19,7 +19,7 @@ parser: yacc
 clean:
 	@echo 'Cleaning up...'
 	@rm -f polynom.lex* polynom.yacc* polynom
-	@rm -rf output
+	@rm -rf output sorted
 	@echo 'Done!'
 
 all: clean parser

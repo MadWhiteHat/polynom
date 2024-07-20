@@ -69,7 +69,6 @@ line:
   EOL                         { ++line; }
   | error EOL                 {
                                 print_error(SYNTAX, "unknown syntax");
-                                exit(-1);
                               }
   | PRINT_VARS EOL            { print_tree(root); ++line; }
   | PRINT '$' VAR_NAME EOL    { print_variable_by_name($3); ++line; }
@@ -81,7 +80,9 @@ line:
   | var_eq EOL                {
                                 is_valid_variable($1);
                                 is_initialized_variable($1);
-                                ++line; }
+                                try_delete_variable($1);
+                                ++line;
+                              }
   | EXIT                      {
                                 delete_tree(root);
                                 YYACCEPT;
@@ -174,57 +175,89 @@ pow_pow:
 
 var_eq:
   var_add '=' var_eq          {
+                                puts("Rule 1");
                                 is_persistent_variable($1);
+                                is_valid_variable($3);
+                                is_initialized_variable($3);
                                 $$ = create_variable(
                                   copy_variable_name($1->name),
                                   copy_polynomial($3->polynomial)
                                 );
                                 try_delete_variable($1);
                                 try_delete_variable($3);
+                                print_variable($$);
                                 root = insert(root, $$);
                               }
-  | var_add                   { $$ = $1; }
+  | var_add                   {
+                                puts("Rule 2");
+                                $$ = $1;
+                                print_variable($$);
+                              }
 
 var_add:
   var_add '+' var_mul         {
+                                puts("Rule 3");
                                 is_valid_variable_operation($1, $3);
                                 $$ = sum_variables($1, $3, '+');
                                 try_delete_variable($1);
                                 try_delete_variable($3);
+                                print_variable($$);
                               }
   | var_add '-' var_mul       {
+                                puts("Rule 4");
                                 is_valid_variable_operation($1, $3);
                                 $$ = sum_variables($1, $3, '-');
                                 try_delete_variable($1);
                                 try_delete_variable($3);
+                                print_variable($$);
                               }
-  | var_mul                   { $$ = $1; }
+  | var_mul                   {
+                                puts("Rule 5");
+                                $$ = $1;
+                                print_variable($$);
+                              }
 
 var_mul:
   var_mul '*' var_neg         {
+                                puts("Rule 6");
                                 is_valid_variable_operation($1, $3);
                                 $$ = mul_variables($1, $3);
                                 try_delete_variable($1);
                                 try_delete_variable($3);
+                                print_variable($$);
                               }
   | var_mul var_pow           {
+                                puts("Rule 7");
                                 is_valid_variable_operation($1, $2);
                                 $$ = mul_variables($1, $2);
                                 try_delete_variable($1);
                                 try_delete_variable($2);
+                                print_variable($$);
                               }
-  | var_neg                   { $$ = $1; }
+  | var_neg                   {
+                                puts("Rule 8");
+                                $$ = $1;
+                                print_variable($$);
+                              }
 
 var_neg:
   '-' var_neg %prec UMINUS    {
+                                puts("Rule 9");
                                 is_valid_variable($2);
+                                is_initialized_variable($2);
                                 $$ = neg_variable($2);
                                 try_delete_variable($2);
+                                print_variable($$);
                               }
-  | var_pow                   { $$ = $1; }
+  | var_pow                   {
+                                puts("Rule 10");
+                                $$ = $1;
+                                print_variable($$);
+                              }
 
 var_pow:
   var '^' var_pow             {
+                                puts("Rule 11");
                                 is_valid_variable_operation($1, $3);
                                 $$ = pow_variable(
                                   $1,
@@ -232,21 +265,36 @@ var_pow:
                                 );
                                 try_delete_variable($1);
                                 try_delete_variable($3);
+                                print_variable($$);
                               }
-  | var                       { $$ = $1; }
+  | var                       {
+                                puts("Rule 12");
+                                $$ = $1;
+                                print_variable($$);
+                              }
 
 var:
   '$' VAR_NAME                {
                                 // Try to find variable in tree
                                 // If not found create new variable with
                                 // NULL polynomial
+                                puts("Rule 13");
                                 $$ = find_variable_by_name(root, $2);
                                 if ($$ == NULL) {
                                   $$ = create_variable($2, NULL);
                                 } else { delete_variable_name($2); }
+                                print_variable($$);
                               }
-  | '(' var_eq ')'            { $$ = $2; }
-  | mono                      { $$ = create_variable(NULL, $1); }
+  | '(' var_eq ')'            {
+                                puts("Rule 14");
+                                $$ = $2;
+                                print_variable($$);
+                              }
+  | mono                      {
+                                puts("Rule 15");
+                                $$ = create_variable(NULL, $1);
+                                print_variable($$);
+                              }
 
 
 %%

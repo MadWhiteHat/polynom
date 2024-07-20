@@ -7,3 +7,4 @@ do
   valgrind --leak-check=full --show-leak-kinds=all ./polynom $testcase\
     &> output/output-`basename $testcase .txt`.txt
 done
+rm -f ./vgcore.*

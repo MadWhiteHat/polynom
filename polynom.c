@@ -32,7 +32,9 @@ pow2(int64_t num) {
 polynomial_t*
 create_polynomial(int64_t coef, char letter, int64_t power) {
   polynomial_t* polynomial = allocate_polynomial(power);
+
   if (polynomial == NULL) { return NULL; }
+
   if (coef != 0) {
     polynomial->coefs.coefs[power] = coef;
     polynomial->coefs.size = power + 1;
@@ -48,17 +50,23 @@ create_polynomial(int64_t coef, char letter, int64_t power) {
 // Destructor
 void
 delete_polynomial(polynomial_t* polynomial) {
+
   if (polynomial) {
     if (polynomial->coefs.coefs) { free(polynomial->coefs.coefs); }
     free(polynomial);
   }
+
 }
 
 // Copy constructor
 polynomial_t*
 copy_polynomial(polynomial_t* polynomial) {
-  polynomial_t* res_polynomial = 
+
+  if (polynomial == NULL) { return NULL; }
+
+  polynomial_t* res_polynomial =
     allocate_polynomial(polynomial->coefs.size - 1);
+
   for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
     res_polynomial->coefs.coefs[i] = polynomial->coefs.coefs[i];
   }
@@ -227,12 +235,11 @@ sum_polynomials(polynomial_t* lhs, polynomial_t* rhs, const char action) {
     if (res->coefs.coefs[new_size - 1] != 0) { break; } 
     --new_size;
   }
-  if (new_size == 0) {
-    free(res->coefs.coefs);
-    res->coefs.coefs = NULL;
-    res->coefs.capacity = 0;
-  }
-  res->coefs.size = new_size;
+
+  // Check if new_size is not zero
+  res->coefs.size = new_size ? new_size : 1;
+
+  shrink_to_fit_polynomial(res);
 
   // Cleanup neg_rhs if action is '-'
   if(neg_rhs != rhs) { delete_polynomial(neg_rhs); }

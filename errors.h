@@ -5,6 +5,9 @@
 #define SYNTAX 1
 #define SEMANTICS 2
 
+#define ERROR_SUCCESS 0
+#define ERROR_FAILURE (1 << 31)
+
 extern int line;
 
 void
