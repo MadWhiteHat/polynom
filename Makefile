@@ -11,7 +11,7 @@ yacc: lex
 parser: yacc
 	@echo 'Creating parser...'
 	@gcc polynom.lex.c polynom.yacc.c \
-		polynom.c variable.c variable_tree.c errors.c \
+		polynom.c variable.c variable_tree.c utility.c \
 		main.c \
 		 -Wall -Wextra -pedantic -o polynom -g -lm
 	@echo 'Done!'

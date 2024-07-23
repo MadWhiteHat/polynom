@@ -2,9 +2,10 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "errors.h"
+#include "utility.h"
 
 int line = 1;
+int err = ERROR_SUCCESS;
 
 void
 yyerror(const char* msg) { (void)(msg); }

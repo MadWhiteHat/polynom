@@ -2,59 +2,66 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "errors.h"
+#include "utility.h"
 #include "variable.h"
 #include "variable_tree.h"
 
 //-------------------------------Variable name--------------------------------//
 
 // Constructor
-variable_name_t*
-create_variable_name(char* var_name, uint32_t var_length) {
+int
+create_variable_name(
+  variable_name_t** this,
+  char* var_name,
+  uint32_t var_length
+) {
   variable_name_t* new_var_name = (variable_name_t*)calloc(
     1, sizeof(variable_name_t)
   );
 
-  if (!new_var_name) { return NULL; }
+  if (new_var_name == NULL) { return ERROR_MEMORY_ALLOCATION; }
 
   new_var_name->buffer = (char*)calloc(var_length + 1, sizeof(char));
-  if (!new_var_name->buffer) {
+  if (new_var_name->buffer == NULL) {
     free(new_var_name);
-    return NULL;
+    return ERROR_MEMORY_ALLOCATION;
   }
 
   memcpy(new_var_name->buffer, var_name, var_length);
   new_var_name->length = var_length;
 
-  return new_var_name;
+  *this = new_var_name;
+  return ERROR_SUCCESS;
 }
 
 // Destructor
 void
-delete_variable_name(variable_name_t* var_name) {
-  if (var_name) {
-    if (var_name->buffer) { free(var_name->buffer); }
-    free(var_name);
+delete_variable_name(variable_name_t** this) {
+  if (*this) {
+    if ((*this)->buffer) { free((*this)->buffer); }
+    free(*this);
+
+    *this = NULL;
   }
 }
 
 // Copy constructor
-variable_name_t*
-copy_variable_name(variable_name_t* var_name) {
-  return create_variable_name(var_name->buffer, var_name->length);
+int
+copy_variable_name(variable_name_t** this, variable_name_t* other) {
+  return create_variable_name(this, other->buffer, other->length);
 }
 
 // Opertaions
 
 void
-print_variable_name(variable_name_t* var_name) {
-  if (!var_name) {
+print_variable_name(variable_name_t* this) {
+  if (this == NULL) {
     printf("Variable name is NULL\n");
     return;
   }
   printf(
-      "Variable name: %s\t Length: %d\n",
-      (var_name->buffer) ? var_name->buffer : "NULL", var_name->length
+    "Variable name: %s\t Length: %d\n",
+    (this->buffer) ? this->buffer : "NULL", this->length
   );
 }
 
@@ -77,68 +84,101 @@ compare_variable_names(variable_name_t* lhs, variable_name_t* rhs) {
 //----------------------------------Variable----------------------------------//
 
 // Constructor
-variable_t*
-create_variable(variable_name_t* name, polynomial_t* polynomial) {
+int
+create_variable(
+  variable_t** this,
+  variable_name_t* name,
+  polynomial_t* polynomial
+) {
   variable_t* new_var = (variable_t*)calloc(1, sizeof(variable_t));
-  if (!new_var) { return NULL; }
+  if (new_var == NULL) { return ERROR_MEMORY_ALLOCATION; }
 
   new_var->name = name;
   new_var->polynomial = polynomial;
 
-  return new_var;
+  *this = new_var;
+
+  return ERROR_SUCCESS;
 }
 
 // Destructor
-void delete_variable(variable_t* var) {
-  if (var) {
-    delete_variable_name(var->name);
-    delete_polynomial(var->polynomial);
-    free(var);
+void
+delete_variable(variable_t** this) {
+  if (*this) {
+    delete_variable_name(&((*this)->name));
+    delete_polynomial(&((*this)->polynomial));
+    free(*this);
+
+    *this = NULL;
   }
 }
 
 // Opertaions
-void is_valid_variable_operation(variable_t* lhs, variable_t* rhs) {
-  is_valid_variable(lhs);
-  is_valid_variable(rhs);
-  is_initialized_variable(lhs);
-  is_initialized_variable(rhs);
-  is_valid_polynomial_operation(lhs->polynomial, rhs->polynomial);
+int
+is_valid_variable_operation(variable_t* lhs, variable_t* rhs) {
+  int err = ERROR_SUCCESS;
+
+  err = is_valid_variable(lhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_valid_variable(rhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_initialized_variable(lhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_initialized_variable(rhs);
+  if (FAILED(err)) { return err; }
+
+  return is_valid_polynomial_operation(lhs->polynomial, rhs->polynomial);
 }
 
-void
-is_valid_variable(variable_t* var) {
-  if (!var) {
+int
+is_valid_variable(variable_t* this) {
+  // Null name and null polinomial at once is considered as invalid state
+
+  if (this == NULL || (this->name == NULL && this->polynomial == NULL)) {
     print_error(SEMANTICS, "invalid variable");
-    exit(-1);
+    return ERROR_INVALID_VARIABLE;
   }
+
+  return ERROR_SUCCESS;
 }
 
-void is_initialized_variable(variable_t* var) {
-  if (var->polynomial == NULL) {
-    print_error(SEMANTICS, "uninitialized variable '%s'", var->name->buffer);
-    exit(-1);
+int
+is_initialized_variable(variable_t* this) {
+  if (this->polynomial == NULL) {
+    print_error(SEMANTICS, "uninitialized variable '%s'", this->name->buffer);
+    return ERROR_UNINITIALIZED_VARIABLE;
   }
+
+  return is_valid_polynomial(this->polynomial);
 }
 
 // Checks if isn't temporary
-void
-is_persistent_variable(variable_t* var) {
-  is_valid_variable(var);
-  if (!var->name) {
+int
+is_persistent_variable(variable_t* this) {
+  int err = ERROR_SUCCESS;
+
+  err = is_valid_variable(this);
+  if (FAILED(err)) { return err; }
+
+  if (this->name == NULL) {
     print_error(SEMANTICS, "assignment to rvalue");
-    exit(-1);
+    return ERROR_RVALUE_ASSIGNMENT;
   }
+
+  return ERROR_SUCCESS;
 }
 
 void
-print_variable(variable_t* var) {
-  if (!var) {
+print_variable(variable_t* this) {
+  if (this == NULL) {
     printf("Variable is NULL\n");
     return;
   }
-  print_variable_name(var->name);
-  print_polynomial(var->polynomial);
+  print_variable_name(this->name);
+  print_polynomial(this->polynomial);
 }
 
 int32_t
@@ -151,43 +191,116 @@ compare_variables(variable_t* lhs, variable_t* rhs) {
 }
 
 void
-try_delete_variable(variable_t* var) {
-  variable_t* tree_var = find_variable_by_name(root, var->name);
-  if (tree_var != var) { delete_variable(var); }
+try_delete_variable(variable_t** this) {
+  variable_t* tree_var = NULL;
+  err = find_variable_by_name(root, (*this)->name, &tree_var);
+  if (SUCCESS(err) && tree_var != *this) { delete_variable(this); }
 }
 
-variable_t*
-sum_variables(variable_t* lhs, variable_t* rhs, const char action) {
-  polynomial_t* res_polynomial = sum_polynomials(
-    lhs->polynomial, rhs->polynomial, action
+int
+assign_variables(variable_t** this, variable_t* lhs, variable_t* rhs) {
+  int err = ERROR_SUCCESS;
+  variable_t* res_variable = NULL;
+  variable_name_t* res_variable_name = NULL;
+  polynomial_t* res_variable_polynomial = NULL;
+
+  err = is_persistent_variable(lhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_valid_variable(rhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_initialized_variable(rhs);
+  if (FAILED(err)) { return err; }
+
+  err = copy_variable_name(&res_variable_name, lhs->name);
+  if (FAILED(err)) { return err; }
+
+  err = copy_polynomial(&res_variable_polynomial, rhs->polynomial);
+  if (FAILED(err)) {
+    delete_variable_name(&res_variable_name);
+    return err;
+  }
+
+  err = create_variable(
+    &res_variable, res_variable_name, res_variable_polynomial
   );
+  if (FAILED(err)) {
+    delete_variable_name(&res_variable_name);
+    delete_polynomial(&res_variable_polynomial);
+    return err;
+  }
+
+  *this = res_variable;
+  return ERROR_SUCCESS;
+}
+
+int
+sum_variables(
+  variable_t** this,
+  variable_t* lhs,
+  variable_t* rhs,
+  const char action
+) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* res_polynomial = NULL;
+
+  err = is_valid_variable_operation(lhs, rhs);
+  if (FAILED(err)) { return err; }
+
+  err = sum_polynomials(
+    &res_polynomial, lhs->polynomial, rhs->polynomial, action
+  );
+  if (FAILED(err)) { return err; }
 
   // return temporary variable regargless of operands type
-  return create_variable(NULL, res_polynomial);
+  return create_variable(this, NULL, res_polynomial);
 }
 
-variable_t*
-mul_variables(variable_t* lhs, variable_t* rhs) {
-  polynomial_t* res_polynomial = mul_polynomials(
-    lhs->polynomial, rhs->polynomial
-  );
+int
+mul_variables(variable_t** this, variable_t* lhs, variable_t* rhs) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* res_polynomial = NULL;
+
+  err = is_valid_variable_operation(lhs, rhs);
+  if (FAILED(err)) { return err; }
+
+  err = mul_polynomials(&res_polynomial, lhs->polynomial, rhs->polynomial);
+  if (FAILED(err)) { return err; }
 
   // return temporary variable regargless of operands type
-  return create_variable(NULL, res_polynomial);
+  return create_variable(this, NULL, res_polynomial);
 }
 
-variable_t*
-neg_variable(variable_t* var) {
-  polynomial_t* res_polynomial = neg_polynomial(var->polynomial);
+int
+neg_variable(variable_t**this, variable_t* other) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* res_polynomial = NULL;
+
+  err = is_valid_variable(other);
+  if (FAILED(err)) { return err; }
+
+  err = is_initialized_variable(other);
+  if (FAILED(err)) { return err; }
+
+  err = neg_polynomial(&res_polynomial, other->polynomial);
+  if (FAILED(err)) { return err; }
 
   // return temporary variable regargless of operand type
-  return create_variable(NULL, res_polynomial);
+  return create_variable(this, NULL, res_polynomial);
 }
 
-variable_t*
-pow_variable(variable_t* var, int64_t power) {
-  polynomial_t* res_polynomial = pow_polynomial(var->polynomial, power);
+int
+pow_variable(variable_t**this, variable_t* lhs, variable_t* rhs) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* res_polynomial = NULL;
+
+  err = is_valid_variable_operation(lhs, rhs);
+  if (FAILED(err)) { return err; }
+
+  err = pow_polynomial(&res_polynomial, lhs->polynomial, rhs->polynomial);
+  if (FAILED(err)) { return err; }
 
   // return temporary variable regargless of operand type
-  return create_variable(NULL, res_polynomial);
+  return create_variable(this, NULL, res_polynomial);
 }

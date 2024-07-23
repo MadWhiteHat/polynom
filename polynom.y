@@ -8,7 +8,7 @@
 }
 
 %code requires {
-  #include "errors.h"
+  #include "utility.h"
   #include "polynom.h"
   #include "variable.h"
   #include "variable_tree.h"
@@ -17,6 +17,7 @@
 %union {
   int64_t num;
   char letter;
+  variable_name_t variable_name_info;
   variable_name_t* variable_name;
   variable_t* variable;
   polynomial_t* polynomial;
@@ -29,13 +30,9 @@
 %token<num> EOL
 %token<num> EXIT
 %token<num> INVALID_VARIABLE_NAME
-%token<variable_name> VAR_NAME
+%token<variable_name_info> VAR_NAME
 
 %type<num> line
-%type<num> pow_add
-%type<num> pow_mul
-%type<num> pow_neg
-%type<num> pow_pow
 %type<polynomial> mono
 %type<polynomial> poly
 %type<polynomial> poly_add
@@ -66,82 +63,223 @@ input:
   ;
 
 line:
-  EOL                         { ++line; }
-  | error EOL                 {
-                                print_error(SYNTAX, "unknown syntax");
-                              }
-  | PRINT_VARS EOL            { print_tree(root); ++line; }
-  | PRINT '$' VAR_NAME EOL    { print_variable_by_name($3); ++line; }
-  | PRINT poly_add EOL        {
-                                print_polynomial($2);
-                                delete_polynomial($2);
+  EOL                         {
+                                // Init
+
+                                // Perform an action
                                 ++line;
+                                err = ERROR_INVALID_SYNTAX;
+
+                                // Cleanup
+                              }
+  | error EOL                 {
+                                // Init
+
+                                // Perform an action
+                                print_error(SYNTAX, "unknown syntax");
+                                ++line;
+                                err = ERROR_SUCCESS;
+
+                                // Cleanup
+                              }
+  | PRINT_VARS EOL            {
+                                // Init
+
+                                // Perform an action
+                                print_tree(root);
+                                ++line;
+                                err = ERROR_SUCCESS;
+
+                                // Cleanup
+                              }
+  | PRINT '$' VAR_NAME EOL    {
+                                // Init
+                                variable_name_t* var_name = NULL;
+
+                                // Perform an action
+                                err = create_variable_name(
+                                  &var_name, $3.buffer, $3.length
+                                );
+                                if (SUCCESS(err)) {
+                                  print_variable_by_name(root, var_name);
+                                }
+                                ++line;
+                                err = ERROR_SUCCESS;
+
+                                // Cleanup
+                                delete_variable_name(&var_name);
+                              }
+  | PRINT poly_add EOL        {
+                                // Init
+
+                                // Perform an action
+                                print_polynomial($2);
+                                ++line;
+                                err = ERROR_SUCCESS;
+
+                                // Cleanup
+                                delete_polynomial(&$2);
                               }
   | var_eq EOL                {
-                                is_valid_variable($1);
-                                is_initialized_variable($1);
-                                try_delete_variable($1);
+                                // Init
+
+                                // Perform an action
+                                err = is_valid_variable($1);
+                                if (SUCCESS(err)) {
+                                  err = is_initialized_variable($1);
+                                }
                                 ++line;
+                                err = ERROR_SUCCESS;
+
+                                // Cleanup
+                                try_delete_variable(&$1);
                               }
   | EXIT                      {
+                                // Init
+
+                                // Perform an action
                                 delete_tree(root);
                                 YYACCEPT;
+
+                                // Cleanup
                               }
 
 poly_add:
     poly_add '+' poly_mul     {
-                                is_valid_polynomial_operation($1, $3);
-                                $$ = sum_polynomials($1, $3, '+');
-                                delete_polynomial($1);
-                                delete_polynomial($3);
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = sum_polynomials(
+                                    &res_polynomial, $1, $3, '+'
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$3);
                               }
   | poly_add '-' poly_mul     {
-                                is_valid_polynomial_operation($1, $3);
-                                $$ = sum_polynomials($1, $3, '-');
-                                delete_polynomial($1);
-                                delete_polynomial($3);
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = sum_polynomials(
+                                    &res_polynomial, $1, $3, '-'
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$3);
                               }
   | poly_add '+' '+' poly_mul {
-                                print_error(SYNTAX,
-                                  "Ill formed addition expression"
-                                );
-                                exit(-1);
+                                // Init
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = ERROR_INVALID_SYNTAX;
+                                  print_error(SYNTAX,
+                                    "Ill formed addition expression"
+                                  );
+                                }
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$4);
                               }
   | poly_mul                  { $$ = $1; }
 
 poly_mul:
   poly_mul '*' poly_neg       {
-                                is_valid_polynomial_operation($1, $3);
-                                $$ = mul_polynomials($1, $3);
-                                delete_polynomial($3);
-                                delete_polynomial($1);
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = mul_polynomials(
+                                    &res_polynomial, $1, $3
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$3);
                               }
   | poly_mul poly_pow         {
-                                is_valid_polynomial_operation($1, $2);
-                                $$ = mul_polynomials($1, $2);
-                                delete_polynomial($2);
-                                delete_polynomial($1);
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = mul_polynomials(
+                                    &res_polynomial, $1, $2
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$2);
                               }
-  | poly_mul '/' poly_neg      {
-                                //Invalid operation
-                                print_error(SYNTAX,
-                                  "polynomial division in not supported"
-                                );
-                                exit(-1);
+  | poly_mul '/' poly_neg     {
+                                // Init
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = ERROR_INVALID_SYNTAX;
+                                  print_error(SYNTAX,
+                                    "polynomial division in not supported"
+                                  );
+                                }
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$3);
                               }
   | poly_neg                  { $$ = $1; }
 
 poly_neg:
   '-' poly_neg %prec UMINUS   {
-                                $$ = neg_polynomial($2);
-                                delete_polynomial($2);
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = neg_polynomial(&res_polynomial, $2);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                                delete_polynomial(&$2);
                               }
   | poly_pow                  { $$ = $1; }
 
 poly_pow:
-  poly_pow '^' pow_pow        {
-                                $$ = pow_polynomial($1, $3);
-                                delete_polynomial($1);
+  poly '^' poly_pow           {
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = pow_polynomial(&res_polynomial, $1, $3);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                                delete_polynomial(&$1);
+                                delete_polynomial(&$3);
                               }
   | poly                      { $$ = $1; }
 
@@ -150,43 +288,62 @@ poly:
   | mono                      { $$ = $1; }
 
 mono:
-  LETTER                      { $$ = create_polynomial(1, $1, 1); }
-  | NUMBER                    { $$ = create_polynomial($1, 0, 0); }
+  LETTER                      {
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
 
-pow_add:
-  pow_add '+' pow_mul         { $$ = $1 + $3; }
-  | pow_add '-' pow_mul       { $$ = $1 - $3; }
-  | pow_mul                   { }
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = create_polynomial(
+                                    &res_polynomial, 1, $1, 1
+                                  );
+                                }
 
-pow_mul:
-  pow_mul '*' pow_neg         { $$ = $1 * $3; }
-  | pow_mul '/' pow_neg       { $$ = $1 / $3; }
-  | pow_mul '%' pow_neg       { $$ = $1 % $3; }
-  | pow_neg                   {  }
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
 
-pow_neg:
-  '-' pow_neg %prec UMINUS    { $$ = -$2; }
-  | pow_pow                   { }
+                                // Cleanup
+                              }
+  | NUMBER                    {
+                                // Init
+                                polynomial_t* res_polynomial = NULL;
 
-pow_pow:
-  pow_pow '^' pow_pow         { $$ = (int64_t)pow($1, $3); }
-  | '(' pow_add ')'           { $$ = $2; }
-  | NUMBER                    { $$ = $1; }
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = create_polynomial(
+                                    &res_polynomial, $1, 0, 0
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_polynomial : NULL;
+
+                                // Cleanup
+                              }
 
 var_eq:
   var_add '=' var_eq          {
                                 puts("Rule 1");
-                                is_persistent_variable($1);
-                                is_valid_variable($3);
-                                is_initialized_variable($3);
-                                $$ = create_variable(
-                                  copy_variable_name($1->name),
-                                  copy_polynomial($3->polynomial)
-                                );
-                                try_delete_variable($1);
-                                try_delete_variable($3);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = assign_variables(&res_variable, $1, $3);
+                                }
+
+                                if (SUCCESS(err)) {
+                                  err = insert(&root, res_variable);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
-                                root = insert(root, $$);
+
+                                // Cleanup
+                                if (FAILED(err)) {
+                                  delete_variable(&res_variable);
+                                }
+                                try_delete_variable(&$1);
+                                try_delete_variable(&$3);
                               }
   | var_add                   {
                                 puts("Rule 2");
@@ -197,19 +354,43 @@ var_eq:
 var_add:
   var_add '+' var_mul         {
                                 puts("Rule 3");
-                                is_valid_variable_operation($1, $3);
-                                $$ = sum_variables($1, $3, '+');
-                                try_delete_variable($1);
-                                try_delete_variable($3);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = sum_variables(
+                                    &res_variable, $1, $3, '+'
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                try_delete_variable(&$1);
+                                try_delete_variable(&$3);
                               }
   | var_add '-' var_mul       {
                                 puts("Rule 4");
-                                is_valid_variable_operation($1, $3);
-                                $$ = sum_variables($1, $3, '-');
-                                try_delete_variable($1);
-                                try_delete_variable($3);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = sum_variables(
+                                    &res_variable, $1, $3, '-'
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                try_delete_variable(&$1);
+                                try_delete_variable(&$3);
                               }
   | var_mul                   {
                                 puts("Rule 5");
@@ -220,19 +401,39 @@ var_add:
 var_mul:
   var_mul '*' var_neg         {
                                 puts("Rule 6");
-                                is_valid_variable_operation($1, $3);
-                                $$ = mul_variables($1, $3);
-                                try_delete_variable($1);
-                                try_delete_variable($3);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = mul_variables(&res_variable, $1, $3);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                try_delete_variable(&$1);
+                                try_delete_variable(&$3);
                               }
   | var_mul var_pow           {
                                 puts("Rule 7");
-                                is_valid_variable_operation($1, $2);
-                                $$ = mul_variables($1, $2);
-                                try_delete_variable($1);
-                                try_delete_variable($2);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = mul_variables(&res_variable, $1, $2);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                try_delete_variable(&$1);
+                                try_delete_variable(&$2);
                               }
   | var_neg                   {
                                 puts("Rule 8");
@@ -243,11 +444,20 @@ var_mul:
 var_neg:
   '-' var_neg %prec UMINUS    {
                                 puts("Rule 9");
-                                is_valid_variable($2);
-                                is_initialized_variable($2);
-                                $$ = neg_variable($2);
-                                try_delete_variable($2);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = neg_variable(&res_variable, $2);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                try_delete_variable(&$2);
                               }
   | var_pow                   {
                                 puts("Rule 10");
@@ -258,14 +468,21 @@ var_neg:
 var_pow:
   var '^' var_pow             {
                                 puts("Rule 11");
-                                is_valid_variable_operation($1, $3);
-                                $$ = pow_variable(
-                                  $1,
-                                  convert_polynomial_to_power($3->polynomial)
-                                );
-                                try_delete_variable($1);
-                                try_delete_variable($3);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = pow_variable(&res_variable, $1, $3);
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                try_delete_variable(&$1);
+                                try_delete_variable(&$3);
                               }
   | var                       {
                                 puts("Rule 12");
@@ -279,11 +496,37 @@ var:
                                 // If not found create new variable with
                                 // NULL polynomial
                                 puts("Rule 13");
-                                $$ = find_variable_by_name(root, $2);
-                                if ($$ == NULL) {
-                                  $$ = create_variable($2, NULL);
-                                } else { delete_variable_name($2); }
+                                // Init
+                                variable_t* res_variable = NULL;
+                                variable_name_t* var_name = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = create_variable_name(
+                                    &var_name, $2.buffer, $2.length
+                                  );
+                                }
+
+                                if (SUCCESS(err)) {
+                                  err = find_variable_by_name(
+                                    root, var_name, &res_variable
+                                  );
+                                }
+
+                                if (err == ERROR_INVALID_TREE) {
+                                  err = create_variable(
+                                    &res_variable, var_name, NULL
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
+
+                                // Cleanup
+                                if (SUCCESS(err)) {
+                                  delete_variable_name(&var_name);
+                                }
                               }
   | '(' var_eq ')'            {
                                 puts("Rule 14");
@@ -292,7 +535,18 @@ var:
                               }
   | mono                      {
                                 puts("Rule 15");
-                                $$ = create_variable(NULL, $1);
+                                // Init
+                                variable_t* res_variable = NULL;
+
+                                // Perform an action
+                                if (SUCCESS(err)) {
+                                  err = create_variable(
+                                    &res_variable, NULL, $1
+                                  );
+                                }
+
+                                $$ = (SUCCESS(err)) ? res_variable : NULL;
+
                                 print_variable($$);
                               }
 

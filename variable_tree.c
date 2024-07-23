@@ -3,19 +3,9 @@
 #include <string.h>
 
 #include "variable_tree.h"
+#include "utility.h"
 
 tree_node_t* root = NULL;
-
-tree_node_t* create_node(variable_t* variable) {
-  tree_node_t* new_node = (tree_node_t*)calloc(1, sizeof(tree_node_t));
-
-  new_node->variable = variable;
-  new_node->right = NULL;
-  new_node->left = NULL;
-  new_node->height = 1;
-
-  return new_node;
-}
 
 int32_t
 height(tree_node_t* node) { return (node) ? node->height : 0; }
@@ -26,53 +16,79 @@ get_balance(tree_node_t* node) {
   return height(node->left) - height(node->right);
 }
 
-tree_node_t*
-insert(tree_node_t* node, variable_t* variable) {
-  if (node == NULL) { return create_node(variable); }
+int
+create_node(tree_node_t** this, variable_t* var) {
+  tree_node_t* new_node = (tree_node_t*)calloc(1, sizeof(tree_node_t));
+  if (new_node == NULL) { return ERROR_MEMORY_ALLOCATION; }
 
-  int32_t cmp_res = compare_variables(variable, node->variable);
+  new_node->variable = var;
+  new_node->right = NULL;
+  new_node->left = NULL;
+  new_node->height = 1;
+
+  *this = new_node;
+  return ERROR_SUCCESS;
+}
+
+int
+insert(tree_node_t** this, variable_t* var) {
+  int err = ERROR_SUCCESS;
+  if (*this == NULL) { return create_node(this, var); }
+
+  int32_t cmp_res = compare_variables(var, (*this)->variable);
   if (cmp_res == 0) {
-    variable_t* tmp = node->variable;
-    node->variable = variable;
-    delete_variable(tmp);
+    variable_t* tmp = (*this)->variable;
+    (*this)->variable = var;
+    delete_variable(&tmp);
     // no need to balance after inplace inserion
   } else {
-    if (cmp_res < 0) { node->left = insert(node->left, variable); }
-    else { node->right = insert(node->right, variable); }
+    if (cmp_res < 0) {
+      err = insert(&((*this)->left), var);
+      if (FAILED(err)) { return err; }
+    } else {
+      err = insert(&((*this)->right), var);
+      if (FAILED(err)) { return err; }
+    }
 
-    node->height = 1 + MAX(height(node->left), height(node->right));
+    (*this)->height = 1 + MAX(height((*this)->left), height((*this)->right));
 
-    int32_t balance = get_balance(node);
+    int32_t balance = get_balance(*this);
     int32_t cmp_left = 0;
-    if (node->left) {
-      cmp_left = compare_variables(variable, node->left->variable);
-    }
     int32_t cmp_right = 0;
-    if (node->right) {
-      cmp_right = compare_variables(variable, node->right->variable);
+
+    if ((*this)->left) {
+      cmp_left = compare_variables(var, (*this)->left->variable);
     }
 
-    // LL
+    if ((*this)->right) {
+      cmp_right = compare_variables(var, (*this)->right->variable);
+    }
+
+    // LL case
     if (balance > 1 && cmp_left < 0) {
-      return rotate_right(node);
+      *this = rotate_right(*this);
+      return ERROR_SUCCESS;
     }
-    // RR
+    // RR case
     if (balance < -1 && cmp_right > 0) {
-      return rotate_left(node);
+      *this = rotate_left(*this);
+      return ERROR_SUCCESS;
     }
-    // LR
+    // LR case
     if (balance > 1 && cmp_left > 0) {
-      node->left = rotate_left(node->left);
-      return rotate_right(node);
+      (*this)->left = rotate_left((*this)->left);
+      *this = rotate_right(*this);
+      return ERROR_SUCCESS;
     }
-    // RL
+    // RL case
     if (balance < -1 && cmp_right < 0) {
-      node->right = rotate_right(node->right);
-      return rotate_left(node);
+      (*this)->right = rotate_left((*this)->right);
+      *this = rotate_left(*this);
+      return ERROR_SUCCESS;
     }
   }
 
-  return node;
+  return ERROR_SUCCESS;
 }
 
 tree_node_t*
@@ -105,10 +121,10 @@ rotate_left(tree_node_t* node) {
 
 void
 print_tree(tree_node_t* node) {
-  if (!node) { return; }
+  if (node == NULL) { return; }
   print_tree(node->left);
   print_variable(node->variable);
-  printf("Node height: %d\n", node->height);
+  DEBUG_PRINT("Node height: %d\n", node->height);
   print_tree(node->right);
 }
 
@@ -118,28 +134,41 @@ delete_tree(tree_node_t* node) {
   delete_tree(node->left);
   delete_tree(node->right);
   node->left = node->right = NULL;
-  delete_variable(node->variable);
+  delete_variable(&(node->variable));
   free(node);
 }
 
-variable_t*
-find_variable_by_name(tree_node_t* node, variable_name_t* var_name) {
-  if (!node || !var_name) { return NULL; }
-  if (!node->variable) { return NULL; } 
+int
+find_variable_by_name(
+  tree_node_t* this,
+  variable_name_t* var_name,
+  variable_t** var
+) {
+  int err = ERROR_SUCCESS;
+
+  if (this == NULL) { return ERROR_INVALID_TREE; }
+  if (var_name == NULL) { return ERROR_INVALID_VARIABLE_NAME; }
+
+  err = is_valid_variable(this->variable);
+  if (FAILED(err)) { return err; }
 
   int32_t cmp_var_names = compare_variable_names(
-    node->variable->name, var_name
+    this->variable->name, var_name
   );
 
-  if (cmp_var_names == 0) { return node->variable; }
-  else if (cmp_var_names > 0) {
-    return find_variable_by_name(node->left, var_name);
-  } else { return find_variable_by_name(node->right, var_name); }
+  if (cmp_var_names == 0) {
+    *var = this->variable;
+    return ERROR_SUCCESS;
+  } else if (cmp_var_names > 0) {
+    return find_variable_by_name(this->left, var_name, var);
+  } else { return find_variable_by_name(this->right, var_name, var); }
 }
 
 void
-print_variable_by_name(variable_name_t* var_name) {
-  variable_t* var = find_variable_by_name(root, var_name);
+print_variable_by_name(tree_node_t* this, variable_name_t* var_name) {
+  int err = ERROR_SUCCESS;
+  variable_t* var = NULL;
 
-  print_variable(var);
+  err = find_variable_by_name(this, var_name, &var);
+  if (SUCCESS(err)) { print_variable(var); }
 }

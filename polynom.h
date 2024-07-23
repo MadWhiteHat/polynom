@@ -3,9 +3,6 @@
 
 #include <stdint.h>
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-
 typedef struct {
   int64_t* coefs;
   int64_t size;
@@ -18,50 +15,64 @@ typedef struct polynomial {
 } polynomial_t;
 
 // Constructor
-polynomial_t*
-create_polynomial(int64_t coef, char letter, int64_t power);
+int
+create_polynomial(
+  polynomial_t** this,
+  int64_t coef,
+  char letter,
+  int64_t power
+);
 
 // Destructor
 void
-delete_polynomial(polynomial_t* polynomial);
+delete_polynomial(polynomial_t** this);
 
 // Copy constructor
-polynomial_t*
-copy_polynomial(polynomial_t* polynomial);
+int
+copy_polynomial(polynomial_t** this, polynomial_t* other);
 
 // Polynomial memory resources management
-polynomial_t*
-allocate_polynomial(int64_t power);
+int
+allocate_polynomial(polynomial_t** this, int64_t power);
 
-void
-shrink_to_fit_polynomial(polynomial_t* polynomial);
+int
+shrink_to_fit_polynomial(polynomial_t* this);
 
 // Polynomial operations
-void
+int
 is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs);
 
-void is_valid_polynomial(polynomial_t* polynomial);
+int
+is_valid_polynomial(polynomial_t* this);
 
 void
-print_polynomial(polynomial_t* polynomial);
-
-polynomial_t*
-sum_polynomials(polynomial_t* lhs, polynomial_t* rhs, const char action);
-
-polynomial_t*
-mul_polynomials(polynomial_t* lhs, polynomial_t* rhs);
+debug_polynomial(polynomial_t* this);
 
 void
+print_polynomial(polynomial_t* this);
+
+int
+sum_polynomials(
+  polynomial_t** this,
+  polynomial_t* lhs,
+  polynomial_t* rhs,
+  const char action
+);
+
+int
+mul_polynomials(polynomial_t** this, polynomial_t* lhs, polynomial_t* rhs);
+
+int
 karatsuba(int64_t* coefs1, int64_t* coefs2, int64_t* res_coefs, int64_t size);
 
-polynomial_t*
-neg_polynomial(polynomial_t* polynomial);
+int
+neg_polynomial(polynomial_t** this, polynomial_t* other);
 
-polynomial_t*
-pow_polynomial(polynomial_t* polynomial, int64_t power);
+int
+pow_polynomial(polynomial_t** this, polynomial_t* lhs, polynomial_t* rhs);
 
-int64_t
-convert_polynomial_to_power(polynomial_t* polynomial);
+int
+convert_polynomial_to_power(polynomial_t* this, int64_t* power);
 
 extern int yylex();
 

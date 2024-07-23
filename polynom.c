@@ -4,20 +4,9 @@
 #include <string.h>
 
 #include "polynom.h"
-#include "errors.h"
+#include "utility.h"
 
 // Static functions
-
-void
-debug_polynomial(polynomial_t* polynomial) {
-  printf("ptr: %p\nlength: %ld\ncapacity: %ld\nletter: %c\n",
-    (void*)polynomial->coefs.coefs, polynomial->coefs.size,
-    polynomial->coefs.capacity, polynomial->letter);
-  for (int64_t i = 0; i < polynomial->coefs.capacity; ++i) {
-    printf("%ld ", polynomial->coefs.coefs[i]);
-  }
-  puts("");
-}
 
 int64_t
 pow2(int64_t num) {
@@ -29,11 +18,18 @@ pow2(int64_t num) {
 } 
 
 // Constructor
-polynomial_t*
-create_polynomial(int64_t coef, char letter, int64_t power) {
-  polynomial_t* polynomial = allocate_polynomial(power);
+int
+create_polynomial(
+  polynomial_t** this,
+  int64_t coef,
+  char letter,
+  int64_t power
+) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* polynomial = NULL;
 
-  if (polynomial == NULL) { return NULL; }
+  err = allocate_polynomial(&polynomial, power);
+  if (FAILED(err)) { return err; }
 
   if (coef != 0) {
     polynomial->coefs.coefs[power] = coef;
@@ -44,177 +40,229 @@ create_polynomial(int64_t coef, char letter, int64_t power) {
     polynomial->letter = 0;
   }
 
-  return polynomial;
+  *this = polynomial;
+  return ERROR_SUCCESS;
 }
 
 // Destructor
 void
-delete_polynomial(polynomial_t* polynomial) {
+delete_polynomial(polynomial_t** this) {
 
-  if (polynomial) {
-    if (polynomial->coefs.coefs) { free(polynomial->coefs.coefs); }
-    free(polynomial);
+  if (*this) {
+    if ((*this)->coefs.coefs) { free((*this)->coefs.coefs); }
+    free(*this);
   }
 
+  *this = NULL;
 }
 
 // Copy constructor
-polynomial_t*
-copy_polynomial(polynomial_t* polynomial) {
+int
+copy_polynomial(polynomial_t** this, polynomial_t* other) {
 
-  if (polynomial == NULL) { return NULL; }
+  int err = ERROR_SUCCESS;
+  polynomial_t* polynomial = NULL;
 
-  polynomial_t* res_polynomial =
-    allocate_polynomial(polynomial->coefs.size - 1);
+  err = is_valid_polynomial(other);
+  if (FAILED(err)) { return err; }
 
-  for (int64_t i = 0; i < polynomial->coefs.size; ++i) {
-    res_polynomial->coefs.coefs[i] = polynomial->coefs.coefs[i];
+  err = allocate_polynomial(&polynomial, other->coefs.size - 1);
+  if (FAILED(err)) { return err; }
+
+  for (int64_t i = 0; i < other->coefs.size; ++i) {
+    polynomial->coefs.coefs[i] = other->coefs.coefs[i];
   }
-  res_polynomial->coefs.size = polynomial->coefs.size;
-  res_polynomial->letter = polynomial->letter;
+  polynomial->coefs.size = other->coefs.size;
+  polynomial->letter = other->letter;
 
-  return res_polynomial;
+  *this = polynomial;
+  return ERROR_SUCCESS;
 }
 
 // Memory management
-polynomial_t*
-allocate_polynomial(int64_t power) {
+int
+allocate_polynomial(polynomial_t** this, int64_t power) {
+
   if (power < 0) {
     print_error(SEMANTICS, "power must be a positive number");
-    exit(-1);
+    return ERROR_POWER_BELOW_ZERO;
   }
 
   polynomial_t* polynomial = (polynomial_t*)calloc(1, sizeof(polynomial_t));
-  if (polynomial == NULL) { return NULL; }
+  if (polynomial == NULL) { return ERROR_MEMORY_ALLOCATION; }
 
   int64_t req_cap = power + 1;
   int64_t new_cap = pow2(req_cap);
-  polynomial->coefs.coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
 
+  polynomial->coefs.coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
   if (polynomial->coefs.coefs == NULL) {
     free(polynomial);
     polynomial = NULL;
+    return ERROR_MEMORY_ALLOCATION;
   }
+
   polynomial->coefs.capacity = new_cap;
 
-  return polynomial;
+  *this = polynomial;
+  return ERROR_SUCCESS;
 }
 
-void
-shrink_to_fit_polynomial(polynomial_t* polynomial) {
-  int64_t new_cap = pow2(polynomial->coefs.size);
-  if (new_cap == polynomial->coefs.capacity) { return; }
+int
+shrink_to_fit_polynomial(polynomial_t* this) {
+
+  int64_t new_cap = pow2(this->coefs.size);
+  if (new_cap == this->coefs.capacity) { return ERROR_SUCCESS; }
 
   int64_t* new_coefs = (int64_t*)calloc(new_cap, sizeof(int64_t));
-  if (new_coefs == NULL) { return; }
-  memcpy(new_coefs, polynomial->coefs.coefs,
-    polynomial->coefs.size * sizeof(int64_t));
+  if (new_coefs == NULL) { return ERROR_MEMORY_ALLOCATION; }
 
-  int64_t* tmp = polynomial->coefs.coefs;
-  polynomial->coefs.coefs = new_coefs;
+  memcpy(new_coefs, this->coefs.coefs, this->coefs.size * sizeof(int64_t));
+
+  // Swap
+  int64_t* tmp = this->coefs.coefs;
+  this->coefs.coefs = new_coefs;
   new_coefs = tmp;
 
-  polynomial->coefs.capacity = new_cap;
+  this->coefs.capacity = new_cap;
 
   free(new_coefs);
+
+  return ERROR_SUCCESS;
 }
 
 // Opertaions
-void
+int
 is_valid_polynomial_operation(polynomial_t* lhs, polynomial_t* rhs) {
-  is_valid_polynomial(lhs);
-  is_valid_polynomial(rhs);
-  if (lhs->letter == 0 || rhs->letter == 0) { return; }
+  int err = ERROR_SUCCESS;
+
+  err = is_valid_polynomial(lhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_valid_polynomial(rhs);
+  if (FAILED(err)) { return err; }
+
+  if (lhs->letter == 0 || rhs->letter == 0) { return ERROR_SUCCESS; }
   else if (lhs->letter != rhs->letter) {
     print_error(SEMANTICS, "Cannot perform operation between polynomials with"
       " different polynomial's variable");
-    exit(-1);
+    return ERROR_INVALID_OPERATION;
   }
+
+  return ERROR_SUCCESS;
 }
 
-void is_valid_polynomial(polynomial_t* polynomial) {
-  if (polynomial == NULL) {
+int
+is_valid_polynomial(polynomial_t* this) {
+
+  if (this == NULL || this->coefs.coefs == NULL) {
     print_error(SEMANTICS, "invalid polynomial");
-    exit(-1);
+    return ERROR_INVALID_POLYNOMIAL;
   }
+
+  return ERROR_SUCCESS;
 }
 
 void
-print_polynomial(polynomial_t* polynomial) {
-  if (!polynomial) {
+debug_polynomial(polynomial_t* this) {
+  DEBUG_PRINT("ptr: %p\nlength: %ld\ncapacity: %ld\nletter: %c\n",
+    (void*)polynomial->coefs.coefs, polynomial->coefs.size,
+    polynomial->coefs.capacity, polynomial->letter);
+  for (int64_t i = 0; i < this->coefs.capacity; ++i) {
+    DEBUG_PRINT("%ld ", polynomial->coefs.coefs[i]);
+  }
+  DEBUG_PRINT("\n");
+}
+
+void
+print_polynomial(polynomial_t* this) {
+
+  if (this == NULL) {
     printf("Polynomial is NULL\n");
     return;
   }
-  int64_t size = polynomial->coefs.size;
+
+  int64_t size = this->coefs.size;
+
   if (size == 0) {
     puts("0");
     return;
   } else if (size == 1) {
-    printf("%ld", polynomial->coefs.coefs[0]);
+    printf("%ld", this->coefs.coefs[0]);
   } else if (size == 2) {
-    if (polynomial->coefs.coefs[1] == 1) {
-      printf("%c", polynomial->letter);
-    } else if (polynomial->coefs.coefs[1] == -1) {
-      printf("-%c", polynomial->letter);
+    if (this->coefs.coefs[1] == 1) {
+      printf("%c", this->letter);
+    } else if (this->coefs.coefs[1] == -1) {
+      printf("-%c", this->letter);
     } else {
-      printf("%ld%c", polynomial->coefs.coefs[1], polynomial->letter);
+      printf("%ld%c", this->coefs.coefs[1], this->letter);
     }
-    if (polynomial->coefs.coefs[0] > 0) {
-      printf("+%ld", polynomial->coefs.coefs[0]);
-    } else if (polynomial->coefs.coefs[0] < 0) {
-      printf("%ld", polynomial->coefs.coefs[0]);
+    if (this->coefs.coefs[0] > 0) {
+      printf("+%ld", this->coefs.coefs[0]);
+    } else if (this->coefs.coefs[0] < 0) {
+      printf("%ld", this->coefs.coefs[0]);
     }
   } else {
-    if (polynomial->coefs.coefs[size - 1] == 1) {
-      printf("%c^%ld", polynomial->letter, size - 1);
-    } else if (polynomial->coefs.coefs[size - 1] == -1) {
-      printf("-%c^%ld", polynomial->letter, size - 1);
+    if (this->coefs.coefs[size - 1] == 1) {
+      printf("%c^%ld", this->letter, size - 1);
+    } else if (this->coefs.coefs[size - 1] == -1) {
+      printf("-%c^%ld", this->letter, size - 1);
     } else {
-      printf("%ld%c^%ld", polynomial->coefs.coefs[size - 1],
-        polynomial->letter, size - 1);
+      printf("%ld%c^%ld", this->coefs.coefs[size - 1],
+        this->letter, size - 1);
     }
     for (int64_t i = size - 1; i > 2; --i) {
-      int64_t coef = polynomial->coefs.coefs[i - 1];
+      int64_t coef = this->coefs.coefs[i - 1];
       if (coef == 0 ) { continue; }
       else if (coef == 1) {
-        printf("+%c^%ld", polynomial->letter, i - 1);
+        printf("+%c^%ld", this->letter, i - 1);
       } else if (coef == -1) {
-        printf("-%c^%ld", polynomial->letter, i - 1);
+        printf("-%c^%ld", this->letter, i - 1);
       } else if (coef > 0) {
-        printf("+%ld%c^%ld", coef, polynomial->letter, i - 1);
+        printf("+%ld%c^%ld", coef, this->letter, i - 1);
       } else {
-        printf("%ld%c^%ld", coef, polynomial->letter, i - 1);
+        printf("%ld%c^%ld", coef, this->letter, i - 1);
       }
     }
-    if (polynomial->coefs.coefs[1] == 1) {
-      printf("+%c", polynomial->letter);
-    } else if (polynomial->coefs.coefs[1] == -1) {
-      printf("-%c", polynomial->letter);
-    } else if (polynomial->coefs.coefs[1] > 0) {
-      printf("+%ld%c", polynomial->coefs.coefs[1], polynomial->letter);
-    } else if (polynomial->coefs.coefs[1] < 0) {
-      printf("%ld%c", polynomial->coefs.coefs[1], polynomial->letter);
+    if (this->coefs.coefs[1] == 1) {
+      printf("+%c", this->letter);
+    } else if (this->coefs.coefs[1] == -1) {
+      printf("-%c", this->letter);
+    } else if (this->coefs.coefs[1] > 0) {
+      printf("+%ld%c", this->coefs.coefs[1], this->letter);
+    } else if (this->coefs.coefs[1] < 0) {
+      printf("%ld%c", this->coefs.coefs[1], this->letter);
     }
-    if (polynomial->coefs.coefs[0] > 0) {
-      printf("+%ld", polynomial->coefs.coefs[0]);
-    } else if (polynomial->coefs.coefs[0] < 0) {
-      printf("%ld", polynomial->coefs.coefs[0]);
+    if (this->coefs.coefs[0] > 0) {
+      printf("+%ld", this->coefs.coefs[0]);
+    } else if (this->coefs.coefs[0] < 0) {
+      printf("%ld", this->coefs.coefs[0]);
     }
   }
   puts("");
 }
 
-polynomial_t*
-sum_polynomials(polynomial_t* lhs, polynomial_t* rhs, const char action) {
+int
+sum_polynomials(
+  polynomial_t** this,
+  polynomial_t* lhs,
+  polynomial_t* rhs,
+  const char action
+) {
   // Rhs with applied '-' sign if action = '-', otherwise neg_rhs = rhs;
+  int err = ERROR_SUCCESS;
   polynomial_t* neg_rhs = rhs;
+
+  err = is_valid_polynomial_operation(lhs, rhs);
+  if (FAILED(err)) { return err; }
+
   if (action == '-') {
-    neg_rhs = neg_polynomial(rhs);
+     err = neg_polynomial(&neg_rhs, rhs);
+     if (FAILED(err)) { return err; }
   }
 
   polynomial_t* min_polynomial = NULL;
   polynomial_t* max_polynomial = NULL;
-  polynomial_t* res = NULL;
+  polynomial_t* res_polynomial = NULL;
 
   if (lhs->coefs.size >= neg_rhs->coefs.size) {
     max_polynomial = lhs;
@@ -224,41 +272,50 @@ sum_polynomials(polynomial_t* lhs, polynomial_t* rhs, const char action) {
     min_polynomial = lhs;
   }
 
-  res = copy_polynomial(max_polynomial);
+  err = copy_polynomial(&res_polynomial, max_polynomial);
+  if (FAILED(err)) { return err; }
 
   for (int64_t i = 0; i < min_polynomial->coefs.size; ++i) {
-    res->coefs.coefs[i] += min_polynomial->coefs.coefs[i];
+    res_polynomial->coefs.coefs[i] += min_polynomial->coefs.coefs[i];
   }
 
-  int64_t new_size = res->coefs.size;
+  int64_t new_size = res_polynomial->coefs.size;
   while (new_size) {
-    if (res->coefs.coefs[new_size - 1] != 0) { break; } 
+    if (res_polynomial->coefs.coefs[new_size - 1] != 0) { break; }
     --new_size;
   }
 
   // Check if new_size is not zero
-  res->coefs.size = new_size ? new_size : 1;
+  res_polynomial->coefs.size = new_size ? new_size : 1;
 
-  shrink_to_fit_polynomial(res);
+  err = shrink_to_fit_polynomial(res_polynomial);
+  if (FAILED(err)) { return err; }
 
   // Cleanup neg_rhs if action is '-'
-  if(neg_rhs != rhs) { delete_polynomial(neg_rhs); }
+  if(neg_rhs != rhs) { delete_polynomial(&neg_rhs); }
 
-  return res;
+  *this = res_polynomial;
+  return ERROR_SUCCESS;
 }
 
-polynomial_t*
-mul_polynomials(polynomial_t* lhs, polynomial_t* rhs) {
+int
+mul_polynomials(polynomial_t** this, polynomial_t* lhs, polynomial_t* rhs) {
 
+  int err = ERROR_SUCCESS;
   int64_t max_cap = MAX(lhs->coefs.capacity, rhs->coefs.capacity);
   int64_t max_power = max_cap - 1;
 
   polynomial_t* tmp_lhs = lhs;
   polynomial_t* tmp_rhs = rhs;
-  polynomial_t* res = NULL;
+  polynomial_t* res_polynomial = NULL;
+
+  err = is_valid_polynomial_operation(lhs, rhs);
+  if (FAILED(err)) { return err; }
 
   if (lhs->coefs.capacity != max_cap) {
-    tmp_lhs = allocate_polynomial(max_power);
+    err = allocate_polynomial(&tmp_lhs, max_power);
+    if (FAILED(err)) { return err; }
+
     memcpy(
       tmp_lhs->coefs.coefs,
       lhs->coefs.coefs,
@@ -266,8 +323,11 @@ mul_polynomials(polynomial_t* lhs, polynomial_t* rhs) {
     );
     tmp_lhs->letter = lhs->letter;
     tmp_lhs->coefs.size = lhs->coefs.size;
+
   } else if (rhs->coefs.capacity != max_cap) {
-    tmp_rhs = allocate_polynomial(max_cap - 1);
+    err = allocate_polynomial(&tmp_rhs, max_power);
+    if (FAILED(err)) { return err; }
+
     memcpy(
       tmp_rhs->coefs.coefs,
       rhs->coefs.coefs,
@@ -277,30 +337,38 @@ mul_polynomials(polynomial_t* lhs, polynomial_t* rhs) {
     tmp_rhs->coefs.size = rhs->coefs.size;
   }
 
-  res = allocate_polynomial(2 * max_cap - 1);
+  err = allocate_polynomial(&res_polynomial, 2 * max_cap - 1);
+  if (FAILED(err)) { return err; }
 
-  karatsuba(
+  err = karatsuba(
     tmp_lhs->coefs.coefs,
     tmp_rhs->coefs.coefs,
-    res->coefs.coefs,
+    res_polynomial->coefs.coefs,
     max_cap
   );
+  if (FAILED(err)) { return err; }
 
-  int64_t power = res->coefs.capacity - 1;
-  while (res->coefs.coefs[power] == 0) { --power; }
-  res->coefs.size = power + 1;
-  res->letter = (lhs->letter != 0) ? lhs->letter : rhs->letter;
+  int64_t power = res_polynomial->coefs.capacity - 1;
 
-  shrink_to_fit_polynomial(res);
+  while (res_polynomial->coefs.coefs[power] == 0) { --power; }
 
-  if (tmp_lhs != lhs) { delete_polynomial(tmp_lhs); }
-  if (tmp_rhs != rhs) { delete_polynomial(tmp_rhs); }
+  res_polynomial->coefs.size = power + 1;
+  res_polynomial->letter = (lhs->letter != 0) ? lhs->letter : rhs->letter;
 
-  return res;
+  err = shrink_to_fit_polynomial(res_polynomial);
+  if (FAILED(err)) { return err; }
+
+  if (tmp_lhs != lhs) { delete_polynomial(&tmp_lhs); }
+  if (tmp_rhs != rhs) { delete_polynomial(&tmp_rhs); }
+
+  *this = res_polynomial;
+  return ERROR_SUCCESS;
 }
 
-void
+int
 karatsuba(int64_t* coefs1, int64_t* coefs2, int64_t* res_coefs, int64_t size) {
+  int err = ERROR_SUCCESS;
+
   if (size <= 64) {
     for (int64_t i = 0; i < size; ++i) {
       for (int64_t j = 0; j < size; ++j) {
@@ -312,16 +380,41 @@ karatsuba(int64_t* coefs1, int64_t* coefs2, int64_t* res_coefs, int64_t size) {
     int64_t* l = (int64_t*)calloc(k, sizeof(int64_t));
     int64_t* r = (int64_t*)calloc(k, sizeof(int64_t));
     int64_t* t = (int64_t*)calloc(size, sizeof(int64_t));
+
     if (l == NULL || r == NULL || t == NULL) {
-      return;
+      // free(NULL) is OK according to C standard, so..
+      free(l);
+      free(r);
+      free(t);
+      return ERROR_MEMORY_ALLOCATION;
     }
+
     for (int64_t i = 0; i < k; ++i) {
       l[i] = coefs1[i] + coefs1[i + k];
       r[i] = coefs2[i] + coefs2[i + k];
     }
-    karatsuba(l, r, t, k);
-    karatsuba(coefs1, coefs2, res_coefs, k);
-    karatsuba(coefs1 + k, coefs2 + k, res_coefs + size, k);
+
+    err = karatsuba(l, r, t, k);
+    if (FAILED(err)) {
+      free(l);
+      free(r);
+      free(t);
+      return err;
+    }
+    err = karatsuba(coefs1, coefs2, res_coefs, k);
+    if (FAILED(err)) {
+      free(l);
+      free(r);
+      free(t);
+      return err;
+    }
+    err = karatsuba(coefs1 + k, coefs2 + k, res_coefs + size, k);
+    if (FAILED(err)) {
+      free(l);
+      free(r);
+      free(t);
+      return err;
+    }
 
     int64_t* t1 = t;
     int64_t* t2 = t + k;
@@ -341,42 +434,60 @@ karatsuba(int64_t* coefs1, int64_t* coefs2, int64_t* res_coefs, int64_t size) {
     free(r);
     free(t);
   }
+
+  return ERROR_SUCCESS;
 }
 
-polynomial_t*
-neg_polynomial(polynomial_t* polynomial) {
-  polynomial_t* res = copy_polynomial(polynomial);
-  for (int64_t i = 0; i < res->coefs.size; ++i) {
-    res->coefs.coefs[i] = -res->coefs.coefs[i];
+int
+neg_polynomial(polynomial_t** this, polynomial_t* other) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* res_polynomial = NULL;
+
+  err = copy_polynomial(&res_polynomial, other);
+  if (FAILED(err)) { return err; }
+
+  for (int64_t i = 0; i < res_polynomial->coefs.size; ++i) {
+    res_polynomial->coefs.coefs[i] = -res_polynomial->coefs.coefs[i];
   }
-  return res;
+
+  *this = res_polynomial;
+  return ERROR_SUCCESS;;
 }
 
-polynomial_t*
-pow_polynomial(polynomial_t* polynomial, int64_t power) {
-  polynomial_t* res = NULL;
+int
+pow_polynomial(polynomial_t** this, polynomial_t* lhs, polynomial_t* rhs) {
+  int err = ERROR_SUCCESS;
+  polynomial_t* res_polynomial = NULL;
   polynomial_t* tmp = NULL;
+  int64_t power = 0;
 
-  // Debug
-  printf("Power: %ld\n", power);
-  print_polynomial(polynomial);
+  err = convert_polynomial_to_power(rhs, &power);
+  if (FAILED(err)) { return err; }
 
   if (power < 0) {
     print_error(SEMANTICS, "power must be postive number");
-    exit(-1);
+    return ERROR_POWER_BELOW_ZERO;
   }
 
   if (power == 0) {
-    if (polynomial->coefs.size == 0) {
+    if (lhs->coefs.size == 0) {
       print_error(SEMANTICS, "undefined result of 0^0");
-      exit(-1);
+      return ERROR_UNDEFINED_BEHAVIOR;
     }
-    else { return create_polynomial(1, 0, 0); }
+    else {
+      err = create_polynomial(&res_polynomial, 1, 0, 0);
+      *this = res_polynomial;
+      return err;
+    }
   }
 
-  res = copy_polynomial(polynomial);
+  err = copy_polynomial(&res_polynomial, lhs);
+  if (FAILED(err)) { return err; }
 
-  if (power == 1) { return res; }
+  if (power == 1) {
+    *this = res_polynomial;
+    return ERROR_SUCCESS;
+  }
 
   int64_t tmp_power = power;
   int64_t power_size = 0;
@@ -384,27 +495,34 @@ pow_polynomial(polynomial_t* polynomial, int64_t power) {
   for (;tmp_power > 1; tmp_power >>= 1) { ++power_size; }
 
   for (int64_t i = power_size - 1; i >= 0; --i) {
-    tmp = res;
-    res = mul_polynomials(tmp, tmp);
-    delete_polynomial(tmp);
+    tmp = res_polynomial;
+
+    err = mul_polynomials(&res_polynomial, tmp, tmp);
+    if (FAILED(err)) { return err; }
+
+    delete_polynomial(&tmp);
 
     if (power & 1 << i) {
-      tmp = res;
-      res = mul_polynomials(tmp, polynomial);
-      delete_polynomial(tmp);
+      tmp = res_polynomial;
+      err = mul_polynomials(&res_polynomial, tmp, lhs);
+      delete_polynomial(&tmp);
     }
   }
 
-  return res;
+  *this = res_polynomial;
+  return ERROR_SUCCESS;
 }
 
-int64_t
-convert_polynomial_to_power(polynomial_t* polynomial) {
-  if (polynomial->coefs.size > 1) {
+int
+convert_polynomial_to_power(polynomial_t* this, int64_t* power) {
+
+  if (this->coefs.size > 1) {
     print_error(SEMANTICS, "Cannot power polynomial to polynomial");
-    exit(-1);
-  } else if (polynomial->coefs.size == 0) {
+    return ERROR_POLYNOMIAL_POWER;
+  } else if (this->coefs.size == 0) {
     return 0;
   }
-  return polynomial->coefs.coefs[0];
+
+  *power = this->coefs.coefs[0];
+  return ERROR_SUCCESS;
 }
