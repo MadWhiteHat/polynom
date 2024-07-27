@@ -5,7 +5,14 @@
 
 #include "polynom.h"
 
+#define VAR_NAME_INFO_BUFFER_SIZE 128
+
 //-------------------------------Variable name--------------------------------//
+
+typedef struct variable_name_info {
+  char buffer[VAR_NAME_INFO_BUFFER_SIZE];
+  uint32_t length;
+} variable_name_info_t;
 
 typedef struct variable_name {
   char* buffer;

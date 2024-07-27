@@ -17,7 +17,7 @@
 %union {
   int64_t num;
   char letter;
-  variable_name_t variable_name_info;
+  variable_name_info_t variable_name_info;
   variable_name_t* variable_name;
   variable_t* variable;
   polynomial_t* polynomial;
@@ -93,13 +93,18 @@ line:
                                 // Cleanup
                               }
   | PRINT '$' VAR_NAME EOL    {
+                                puts("Rule 0");
                                 // Init
                                 variable_name_t* var_name = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 err = create_variable_name(
                                   &var_name, $3.buffer, $3.length
                                 );
+
+                                printf("Error code: %d\n", err);
+                                print_variable_name(var_name);
                                 if (SUCCESS(err)) {
                                   print_variable_by_name(root, var_name);
                                 }
@@ -124,7 +129,10 @@ line:
                                 // Init
 
                                 // Perform an action
-                                err = is_valid_variable($1);
+                                if (SUCCESS(err)) {
+                                  err = is_valid_variable($1);
+                                }
+
                                 if (SUCCESS(err)) {
                                   err = is_initialized_variable($1);
                                 }
@@ -326,29 +334,33 @@ var_eq:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = assign_variables(&res_variable, $1, $3);
                                 }
 
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = insert(&root, res_variable);
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 if (FAILED(err)) {
                                   delete_variable(&res_variable);
                                 }
+
                                 try_delete_variable(&$1);
                                 try_delete_variable(&$3);
                               }
   | var_add                   {
                                 puts("Rule 2");
                                 $$ = $1;
-                                print_variable($$);
+                                /*print_variable($$);*/
                               }
 
 var_add:
@@ -358,15 +370,17 @@ var_add:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = sum_variables(
                                     &res_variable, $1, $3, '+'
                                   );
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 try_delete_variable(&$1);
@@ -378,15 +392,17 @@ var_add:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = sum_variables(
                                     &res_variable, $1, $3, '-'
                                   );
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 try_delete_variable(&$1);
@@ -395,7 +411,7 @@ var_add:
   | var_mul                   {
                                 puts("Rule 5");
                                 $$ = $1;
-                                print_variable($$);
+                                /*print_variable($$);*/
                               }
 
 var_mul:
@@ -405,13 +421,15 @@ var_mul:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = mul_variables(&res_variable, $1, $3);
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 try_delete_variable(&$1);
@@ -423,13 +441,15 @@ var_mul:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = mul_variables(&res_variable, $1, $2);
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 try_delete_variable(&$1);
@@ -438,7 +458,7 @@ var_mul:
   | var_neg                   {
                                 puts("Rule 8");
                                 $$ = $1;
-                                print_variable($$);
+                                //print_variable($$);
                               }
 
 var_neg:
@@ -448,13 +468,15 @@ var_neg:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = neg_variable(&res_variable, $2);
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 try_delete_variable(&$2);
@@ -462,7 +484,7 @@ var_neg:
   | var_pow                   {
                                 puts("Rule 10");
                                 $$ = $1;
-                                print_variable($$);
+                                /*print_variable($$);*/
                               }
 
 var_pow:
@@ -472,13 +494,15 @@ var_pow:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = pow_variable(&res_variable, $1, $3);
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
                                 try_delete_variable(&$1);
@@ -487,7 +511,7 @@ var_pow:
   | var                       {
                                 puts("Rule 12");
                                 $$ = $1;
-                                print_variable($$);
+                                /*print_variable($$);*/
                               }
 
 var:
@@ -501,32 +525,33 @@ var:
                                 variable_name_t* var_name = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = create_variable_name(
                                     &var_name, $2.buffer, $2.length
                                   );
                                 }
 
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = find_variable_by_name(
                                     root, var_name, &res_variable
                                   );
                                 }
 
+                                printf("Error code: %d\n", err);
                                 if (err == ERROR_INVALID_TREE) {
                                   err = create_variable(
                                     &res_variable, var_name, NULL
                                   );
-                                }
+                                } else { delete_variable_name(&var_name); }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
 
                                 // Cleanup
-                                if (SUCCESS(err)) {
-                                  delete_variable_name(&var_name);
-                                }
                               }
   | '(' var_eq ')'            {
                                 puts("Rule 14");
@@ -539,15 +564,17 @@ var:
                                 variable_t* res_variable = NULL;
 
                                 // Perform an action
+                                printf("Error code: %d\n", err);
                                 if (SUCCESS(err)) {
                                   err = create_variable(
                                     &res_variable, NULL, $1
                                   );
                                 }
 
+                                printf("Error code: %d\n", err);
                                 $$ = (SUCCESS(err)) ? res_variable : NULL;
 
-                                print_variable($$);
+                                /*print_variable($$);*/
                               }
 
 

@@ -130,10 +130,9 @@ print_tree(tree_node_t* node) {
 
 void
 delete_tree(tree_node_t* node) {
-  if (!node) { return; }
+  if (node == NULL) { return; }
   delete_tree(node->left);
   delete_tree(node->right);
-  node->left = node->right = NULL;
   delete_variable(&(node->variable));
   free(node);
 }
@@ -170,5 +169,6 @@ print_variable_by_name(tree_node_t* this, variable_name_t* var_name) {
   variable_t* var = NULL;
 
   err = find_variable_by_name(this, var_name, &var);
+  printf("Error code: %d\n", err);
   if (SUCCESS(err)) { print_variable(var); }
 }

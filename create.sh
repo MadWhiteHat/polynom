@@ -1,5 +1,7 @@
 #!/bin/sh
 
+mkdir ./tests 2> /dev/null
+
 case_type=("varname" "number" "letter" "parentheses-varname" "parentheses-number" "parentheses-letter")
 case_operation=("addition" "substraction" "multiplication" "multiplication-no-sign" "power")
 for operation in ${case_operation[@]}
@@ -89,11 +91,11 @@ do
         esac
 
         TEST_NAME="$operation-$result-$lhs-$rhs.txt"
-        echo "$TEST_CASE" >> "$TEST_NAME"
+        echo "$TEST_CASE" >> "./tests/$TEST_NAME"
 
         case "$result" in
           "${case_type[0]}"|"${case_type[3]}")
-            echo "echo \$a" >> $TEST_NAME
+            echo "echo \$a" >> "./tests/$TEST_NAME"
             ;;
         esac
       done

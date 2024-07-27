@@ -193,8 +193,13 @@ compare_variables(variable_t* lhs, variable_t* rhs) {
 void
 try_delete_variable(variable_t** this) {
   variable_t* tree_var = NULL;
+  int err = ERROR_SUCCESS;
+
+  if (*this == NULL) { return; }
+
   err = find_variable_by_name(root, (*this)->name, &tree_var);
-  if (SUCCESS(err) && tree_var != *this) { delete_variable(this); }
+
+  if (FAILED(err) || tree_var != *this) { delete_variable(this); }
 }
 
 int
@@ -204,13 +209,13 @@ assign_variables(variable_t** this, variable_t* lhs, variable_t* rhs) {
   variable_name_t* res_variable_name = NULL;
   polynomial_t* res_variable_polynomial = NULL;
 
-  err = is_persistent_variable(lhs);
-  if (FAILED(err)) { return err; }
-
   err = is_valid_variable(rhs);
   if (FAILED(err)) { return err; }
 
   err = is_initialized_variable(rhs);
+  if (FAILED(err)) { return err; }
+
+  err = is_persistent_variable(lhs);
   if (FAILED(err)) { return err; }
 
   err = copy_variable_name(&res_variable_name, lhs->name);

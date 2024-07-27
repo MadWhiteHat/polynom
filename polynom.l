@@ -47,7 +47,11 @@ VALID_SYMS [+\-*/%^()$=]
 
 <VAR_DEF>{ID}             {
                             DEBUG_PRINT("Return variable name:");
-                            yylval.variable_name_info.buffer = yytext;
+                            snprintf(
+                              yylval.variable_name_info.buffer,
+                              VAR_NAME_INFO_BUFFER_SIZE,
+                              "%s", yytext
+                            );
                             yylval.variable_name_info.length = yyleng;
                             BEGIN(INITIAL);
                             return VAR_NAME;

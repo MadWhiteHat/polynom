@@ -1,0 +1,13 @@
+./sorted/other: 126
+./sorted/segfault: 0
+./sorted/lexical: 0
+./sorted/syntax: 2
+./sorted/semantics/different: 120
+./sorted/semantics/other: 0
+./sorted/semantics/rvalue: 240
+./sorted/semantics/uninitialized: 615
+./sorted/semantics/polynomial_power: 24
+Total: 1127
+./sorted/no_leak: 1125
+./sorted/leak: 2
+Total: 1127
