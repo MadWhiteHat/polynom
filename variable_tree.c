@@ -167,6 +167,5 @@ print_variable_by_name(tree_node_t* this, variable_name_t* var_name) {
   variable_t* var = NULL;
 
   err = find_variable_by_name(this, var_name, &var);
-  printf("Error code: %d\n", err);
   if (SUCCESS(err)) { print_variable(var); }
 }
