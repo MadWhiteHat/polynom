@@ -37,9 +37,7 @@ insert(tree_node_t** this, variable_t* var) {
 
   int32_t cmp_res = compare_variables(var, (*this)->variable);
   if (cmp_res == 0) {
-    variable_t* tmp = (*this)->variable;
     (*this)->variable = var;
-    delete_variable(&tmp);
     // no need to balance after inplace inserion
   } else {
     if (cmp_res < 0) {

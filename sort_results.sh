@@ -40,7 +40,6 @@ then
     then
       ln -sf $(realpath $filename) ./sorted/segfault/$(basename $filename)
     else
-      echo $filename
       ln -sf $(realpath $filename) ./sorted/other/$(basename $filename)
     fi
   done

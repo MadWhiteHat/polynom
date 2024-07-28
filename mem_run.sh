@@ -5,7 +5,7 @@ mem_test() {
     &> output/output-$(basename $1)
 }
 
-if [ $# -gt 2 ]
+if [ $# -eq 1 ]
 then
   mem_test $1
 else
